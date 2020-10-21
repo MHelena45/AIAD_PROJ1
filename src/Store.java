@@ -3,6 +3,7 @@ import jade.core.behaviours.SimpleBehaviour;
 
 public class Store extends Agent {
     private Location storeLocation;
+    List<Product> listOfOrders;
 
     public void setup() {
         System.out.println("Setting up Store Agent");

@@ -4,12 +4,16 @@ import jade.core.behaviours.SimpleBehaviour;
 import java.util.List;
 
 public class Courier extends Agent {
-    private int productCapacity, maxWorkHoursPerDay;
+    const int velocity = 40; //velocity Km/h
+    private int maxWorkHoursPerDay;
     List<Product> listOfDeliveries;
+    private Location storeLocation; //start and end of the traject
 
     public void setup() {
         System.out.println("Setting up Courier Agent");
         addBehaviour(new Behaviour(this));
+
+        storeLocation = new Location(0,0);
     }
 
     class Behaviour extends SimpleBehaviour {
