@@ -1,12 +1,12 @@
-public class DeliveryOrder {
+public class Assignment {
     
     private int version;
     private MessageType type;
     private Product order;
 
-    public DeliveryOrder(int version, Product order) {
+    public Assignment(int version, Product order) {
         this.version = version;
-        this.type = DeliveryOrder;
+        this.type = Assignment;
         this.order = order;
     }
 
