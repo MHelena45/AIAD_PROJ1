@@ -1,39 +1,110 @@
 package AgentFiles;
 
+import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.SimpleBehaviour;
+import jade.core.behaviours.Behaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.lang.acl.UnreadableException;
+import jade.proto.AchieveREInitiator;
 import jade.proto.ContractNetResponder;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 public class CourierAgent extends Agent {
     private final int velocity = 40; //velocity Km/h
     private int maxWorkHoursPerDay;
     private List<Product> listOfDeliveries;
-    private Location storeLocation; //start and end of the traject
+    private int maxCapacity;
+    private Location storeLocation; //start and end of the trajectory
+    private AID storeAID;
 
     public void setup() {
-        System.out.println("Setting up CourierAgent");
-        storeLocation = new Location(0,0); //SHOULD THIS BE IN CONSTRUCTOR?
+        Object[] args = getArguments();
+        maxWorkHoursPerDay = (int) args[0];
+        storeLocation = (Location) args[1];
+        maxCapacity = (int) args[2];
+        listOfDeliveries = new ArrayList<>(maxCapacity);
+        storeAID = (AID) args[3];
 
-        addBehaviour(new Behaviour(this));
+        addBehaviour(new CourierCheckIn()); //Check in too store
         addBehaviour(new FIPAContractNetResp(this, MessageTemplate.MatchPerformative(ACLMessage.CFP)));
     }
 
-    class FIPAContractNetResp extends ContractNetResponder {
+    private float addDelivery(Product product) { //TODO change return type into TIMESTAMP???
+        if(listOfDeliveries.size() >= maxCapacity) return -1;
+        listOfDeliveries.add(product);
+        float totalTime = calculateTotalTime();
 
-        public FIPAContractNetResp(Agent a, MessageTemplate mt) {
+        if(totalTime > maxWorkHoursPerDay) {
+            listOfDeliveries.remove(product);
+            return -1;
+        }
+        else return totalTime;
+    }
+
+    private float calculateTotalTime() { //Returns time in hours
+        Location prevLocation = storeLocation; //Starts at store location
+        float totalTime = 0;
+        for (Product product : listOfDeliveries) {
+            double distance = prevLocation.calculateDistance(product.getDeliveryLocation());
+            totalTime += distance/velocity;
+            prevLocation = product.getDeliveryLocation();
+        }
+
+        return totalTime;
+    }
+
+    class CourierCheckIn extends Behaviour {
+        boolean checkedIn = false;
+
+        @Override
+        public void action() {
+            ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+            try {
+                msg.setContentObject(this);
+            } catch (IOException e) {
+                System.err.println("Couldn't send check-In message with Courier: " + this);
+            }
+            msg.addReceiver(storeAID);
+            send(msg);
+
+            System.out.println("Checking-In");
+            checkedIn = true; //TODO Change this to true only when we recieve a response
+        }
+
+        @Override
+        public boolean done() {
+            return checkedIn;
+        }
+    }
+
+    class FIPAContractNetResp extends ContractNetResponder {
+        FIPAContractNetResp(Agent a, MessageTemplate mt) {
             super(a, mt);
         }
 
-
         protected ACLMessage handleCfp(ACLMessage cfp) {
+            Product product;
             ACLMessage reply = cfp.createReply();
-            reply.setPerformative(ACLMessage.PROPOSE);
-            reply.setContent("I will do it for free!!!");
-            // ...
+            try {
+                product = (Product) cfp.getContentObject();
+            } catch (UnreadableException e) {
+                System.err.println("Courier " + getAID() + " couldn't get ContentObject from " + cfp);
+
+                reply.setPerformative(ACLMessage.REFUSE);
+                return reply;
+            }
+
+            float timeTillDelivery = addDelivery(product);
+            if(timeTillDelivery == -1) reply.setPerformative(ACLMessage.REFUSE);
+            else {
+                reply.setPerformative(ACLMessage.PROPOSE);
+                reply.setContent(String.valueOf(timeTillDelivery));
+            }
             return reply;
         }
 
@@ -50,24 +121,5 @@ public class CourierAgent extends Agent {
             return result;
         }
 
-    }
-
-    class Behaviour extends SimpleBehaviour {
-        private boolean finished = false;
-
-        Behaviour(Agent agent) {
-            super(agent);
-        }
-
-        @Override
-        public void action() {
-            System.out.println("This CourierAgent's name is: " + myAgent.getLocalName());
-            finished = true;
-        }
-
-        @Override
-        public boolean done() {
-            return finished;
-        }
     }
 }

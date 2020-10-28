@@ -1,16 +1,16 @@
-package Mensages;
+package Messages;
 
 import AgentFiles.Product;
 
-public class Assignment {
+public class DeliveryOrder {
     
     private int version;
     private MessageType type;
     private Product order;
 
-    public Assignment(int version, Product order) {
+    public DeliveryOrder(int version, Product order) {
         this.version = version;
-        this.type = MessageType.Assignment;
+        this.type = MessageType.DeliveryOrder;
         this.order = order;
     }
 

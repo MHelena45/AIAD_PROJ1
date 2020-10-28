@@ -1,4 +1,4 @@
-package Mensages;
+package Messages;
 
 import AgentFiles.Product;
 
