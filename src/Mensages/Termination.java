@@ -1,3 +1,7 @@
+package Mensages;
+
+import AgentFiles.Product;
+
 public class Termination{
     
     private int version;
@@ -6,7 +10,7 @@ public class Termination{
     /* This message informs the courier that he can start delivering */
     public Termination(int version, Product order) {
         this.version = version;
-        this.type = Termination;
+        this.type = MessageType.Termination;
     }
 
 }

@@ -1,3 +1,7 @@
+package Mensages;
+
+import AgentFiles.Product;
+
 public class Assignment {
     
     private int version;
@@ -6,7 +10,7 @@ public class Assignment {
 
     public Assignment(int version, Product order) {
         this.version = version;
-        this.type = Assignment;
+        this.type = MessageType.Assignment;
         this.order = order;
     }
 

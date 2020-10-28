@@ -16,7 +16,7 @@ public class JadeInit {
         //Add agents
         AgentContainer mainContainer = runt.createMainContainer(profile);
         try {
-            AgentController agentController = mainContainer.createNewAgent("BadCode Inc.", "Store", null);
+            AgentController agentController = mainContainer.createNewAgent("BadCode Inc.", "AgentFiles.DummyAgent", null);
         } catch (StaleProxyException e) {
             System.err.println("\nThere was an error creating the agent!");
             e.printStackTrace();

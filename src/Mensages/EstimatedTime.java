@@ -1,3 +1,7 @@
+package Mensages;
+
+import AgentFiles.Product;
+
 public class EstimatedTime {
     
     private int version, estimatedTime;
@@ -7,7 +11,7 @@ public class EstimatedTime {
 
     public EstimatedTime(int version, Product order) {
         this.version = version;
-        this.type = EstimatedTime;
+        this.type = MessageType.EstimatedTime;
         this.order = order;
     }
 

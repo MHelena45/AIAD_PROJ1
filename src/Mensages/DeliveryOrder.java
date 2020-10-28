@@ -1,3 +1,7 @@
+package Mensages;
+
+import AgentFiles.Product;
+
 public class DeliveryOrder {
     
     private int version;
@@ -6,7 +10,7 @@ public class DeliveryOrder {
 
     public DeliveryOrder(int version, Product order) {
         this.version = version;
-        this.type = DeliveryOrder;
+        this.type = MessageType.DeliveryOrder;
         this.order = order;
     }
 

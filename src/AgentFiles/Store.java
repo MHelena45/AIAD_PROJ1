@@ -1,23 +1,30 @@
+package AgentFiles;
+
 import jade.core.Agent;
 import jade.core.behaviours.SimpleBehaviour;
+import java.util.List;
 
-public class DummyAgent extends Agent {
+public class Store extends Agent {
+    private Location storeLocation;
+    List<Product> listOfOrders;
 
     public void setup() {
-        System.out.println("Hi, I'm Dummy!");
+        System.out.println("Setting up AgentFiles.Store Agent");
         addBehaviour(new Behaviour(this));
+
+        storeLocation = new Location(0,0);
     }
 
     class Behaviour extends SimpleBehaviour {
         private boolean finished = false;
 
-        public Behaviour(Agent agent) {
+        Behaviour(Agent agent) {
             super(agent);
         }
 
         @Override
         public void action() {
-            System.out.println("My name is: " + myAgent.getLocalName());
+            System.out.println("This AgentFiles.Store's name is: " + myAgent.getLocalName());
             finished = true;
         }
 

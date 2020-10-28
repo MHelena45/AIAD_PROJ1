@@ -1,3 +1,5 @@
+package Mensages;
+
 public enum MessageType {
     DeliveryOrder,
     Assignment,
