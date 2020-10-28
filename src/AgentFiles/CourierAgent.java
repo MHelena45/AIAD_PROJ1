@@ -6,15 +6,14 @@ import jade.core.behaviours.Behaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
-import jade.proto.AchieveREInitiator;
 import jade.proto.ContractNetResponder;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
-public class CourierAgent extends Agent {
+public class CourierAgent extends Agent implements Serializable {
     private final int velocity = 40; //velocity Km/h
     private int maxWorkHoursPerDay;
     private List<Product> listOfDeliveries;
@@ -30,7 +29,7 @@ public class CourierAgent extends Agent {
         listOfDeliveries = new ArrayList<>(maxCapacity);
         storeAID = (AID) args[3];
 
-        addBehaviour(new CourierCheckIn()); //Check in too store
+        addBehaviour(new CourierCheckIn(this.getAID())); //Check in too store
         addBehaviour(new FIPAContractNetResp(this, MessageTemplate.MatchPerformative(ACLMessage.CFP)));
     }
 
@@ -60,14 +59,22 @@ public class CourierAgent extends Agent {
 
     class CourierCheckIn extends Behaviour {
         boolean checkedIn = false;
+        private AID courierAID;
+
+        CourierCheckIn(AID courierAID) {
+            this.courierAID = courierAID;
+        }
 
         @Override
         public void action() {
             ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
             try {
-                msg.setContentObject(this);
+                msg.setContentObject(courierAID);
             } catch (IOException e) {
+                e.printStackTrace();
                 System.err.println("Couldn't send check-In message with Courier: " + this);
+                checkedIn = true; //Change this
+                return;
             }
             msg.addReceiver(storeAID);
             send(msg);

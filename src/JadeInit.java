@@ -30,6 +30,7 @@ public class JadeInit {
         String storeName = "Loja Da Dina";
         try {
             storeController = mainContainer.createNewAgent(storeName, "AgentFiles.StoreAgent", null);
+            storeController.start();
         } catch (StaleProxyException e) {
             System.err.println("\nThere was an error creating the agent!");
             e.printStackTrace();
@@ -60,7 +61,9 @@ public class JadeInit {
             args[0] = hours; args[1] = storeLocation; args[2] = capacity; args[3] = storeAID;
 
             try {
-                courierControllers.add(mainContainer.createNewAgent("Courier"+i,"AgentFiles.CourierAgent", args));
+                AgentController courierController = mainContainer.createNewAgent("Courier"+i,"AgentFiles.CourierAgent", args);
+                courierControllers.add(courierController);
+                courierController.start();
             } catch (StaleProxyException e) {
                 System.err.println("Couldn't Create Courier Agent: " + i);
             }

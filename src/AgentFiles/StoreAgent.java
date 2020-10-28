@@ -1,25 +1,21 @@
 package AgentFiles;
 
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
-import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
-import jade.proto.AchieveREResponder;
 import jade.proto.ContractNetInitiator;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.CyclicBarrier;
 
 public class StoreAgent extends Agent {
     private final Location storeLocation = new Location(0,0);
     List<Product> listOfOrders;
-    private List<CourierAgent> couriers;
+    private List<AID> couriers;
 
     public void setup() {
         this.couriers = new ArrayList<>();
@@ -27,7 +23,7 @@ public class StoreAgent extends Agent {
         System.out.println("Store Setup complete");
     }
 
-    private void addCourier(CourierAgent courierAgent) {
+    private void addCourier(AID courierAgent) {
         this.couriers.add(courierAgent);
     }
 
@@ -54,9 +50,9 @@ public class StoreAgent extends Agent {
             if(msg != null) {
                 System.out.println(msg);
 
-                CourierAgent courierAgent;
+                AID courierAgent;
                 try {
-                    courierAgent = (CourierAgent) msg.getContentObject();
+                    courierAgent = (AID) msg.getContentObject();
                 } catch (UnreadableException e) {
                     System.err.println("Can't get Object from CheckIn msg");
                     return;
@@ -74,9 +70,9 @@ public class StoreAgent extends Agent {
     }
 
     class FIPAContractNetInit extends ContractNetInitiator {
-        private List<CourierAgent> couriers;
+        private List<AID> couriers;
 
-        FIPAContractNetInit(Agent a, ACLMessage msg, List<CourierAgent> couriers) {
+        FIPAContractNetInit(Agent a, ACLMessage msg, List<AID> couriers) {
             super(a, msg);
             this.couriers = couriers;
         }
@@ -84,8 +80,8 @@ public class StoreAgent extends Agent {
         protected Vector prepareCfps(ACLMessage cfp) {
             Vector<ACLMessage> v = new Vector<>();
 
-            for(CourierAgent courierAgent : couriers) {
-                cfp.addReceiver(courierAgent.getAID());
+            for(AID courierAgent : couriers) {
+                cfp.addReceiver(courierAgent);
             }
 
             v.add(cfp);
