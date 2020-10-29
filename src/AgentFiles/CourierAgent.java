@@ -33,16 +33,63 @@ public class CourierAgent extends Agent implements Serializable {
         addBehaviour(new FIPAContractNetResp(this, MessageTemplate.MatchPerformative(ACLMessage.CFP)));
     }
 
-    private float addDelivery(Product product) { //TODO change return type into TIMESTAMP???
+    /*
+        returns the time added with that delivery
+     */
+    private float addDelivery(Product newProduct) { //TODO change return type into TIMESTAMP???
+
         if(listOfDeliveries.size() >= maxCapacity) return -1;
-        listOfDeliveries.add(product);
-        float totalTime = calculateTotalTime();
+
+        float initialTime = calculateTotalTime();
+
+        int distance = 0;
+        //the position of the addition doesn't matter when the size is 0 or 1
+        if(listOfDeliveries.size() == 0) {
+            listOfDeliveries.add(newProduct);
+            distance = 2 * Location.ManhattanDistance(storeLocation, newProduct.getDeliveryLocation());
+
+        } else if( listOfDeliveries.size() == 1) {
+            listOfDeliveries.add(newProduct);
+            distance = Location.ManhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation()) +
+                    Location.ManhattanDistance(listOfDeliveries.get(0).getDeliveryLocation(), newProduct.getDeliveryLocation()) +
+                    Location.ManhattanDistance(newProduct.getDeliveryLocation(), storeLocation);
+
+        } else {
+
+            int finalPosition = 0;
+
+            for (int i = 0; i < listOfDeliveries.size(); i++) {
+                List<Product> productsCopy = new ArrayList<>(listOfDeliveries);
+                int tmpDistance = 0;
+
+                //copy by value
+                productsCopy.add(i, newProduct);
+
+                tmpDistance += Location.ManhattanDistance(storeLocation, productsCopy.get(0).getDeliveryLocation());
+                tmpDistance += Location.ManhattanDistance(productsCopy.get(productsCopy.size() - 1).getDeliveryLocation(), storeLocation);
+
+                for (int j = 0; j < productsCopy.size() - 1; j++) {
+                    tmpDistance += Location.ManhattanDistance(productsCopy.get(j).getDeliveryLocation(), productsCopy.get(j + 1).getDeliveryLocation());
+                }
+
+                //check if it was instantiated
+                if (distance == -1 || distance > tmpDistance) {
+                    distance = tmpDistance;
+                    finalPosition = i;
+                }
+            }
+
+
+            listOfDeliveries.add(finalPosition, newProduct);
+        }
+
+        float totalTime = distance/velocity;
 
         if(totalTime > maxWorkHoursPerDay) {
-            listOfDeliveries.remove(product);
+            listOfDeliveries.remove(newProduct);
             return -1;
         }
-        else return totalTime;
+        else return (totalTime - initialTime);
     }
 
     private float calculateTotalTime() { //Returns time in hours
