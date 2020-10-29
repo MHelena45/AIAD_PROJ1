@@ -4,6 +4,7 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 import jade.proto.ContractNetInitiator;
 
@@ -46,7 +47,7 @@ public class StoreAgent extends Agent {
 
         @Override
         public void action() {
-            ACLMessage msg = receive();
+            ACLMessage msg = receive(MessageTemplate.MatchPerformative(ACLMessage.SUBSCRIBE));
             if(msg != null) {
                 System.out.println(msg);
 
@@ -64,6 +65,9 @@ public class StoreAgent extends Agent {
                 reply.setPerformative(ACLMessage.INFORM);
                 reply.setContent("Got your message!");
                 send(reply);
+
+                if(couriers.size() == 5)
+                    sendDeliveryRequest(new Product(1, new Location(1,2), 72000));
             }
             else block();
         }
@@ -94,9 +98,25 @@ public class StoreAgent extends Agent {
         protected void handleAllResponses(Vector responses, Vector acceptances) {
             System.out.println("got " + responses.size() + " responses!");
 
+            AID chosenAgent = null;
+            float minTime = Float.MAX_VALUE;
+            for (Object response : responses) {
+                System.out.println(((ACLMessage) response).getSender().getName() + " proposed " + ((ACLMessage) response).getContent());
+                float timeTaken = Float.parseFloat(((ACLMessage) response).getContent());
+                if(timeTaken < minTime) {
+                    chosenAgent = ((ACLMessage) response).getSender();
+                    minTime = timeTaken;
+                }
+            }
+
             for (Object response : responses) {
                 ACLMessage msg = ((ACLMessage) response).createReply();
-                msg.setPerformative(ACLMessage.ACCEPT_PROPOSAL); // OR NOT!
+                if(((ACLMessage) response).getSender() == chosenAgent) {
+                    System.out.println("Accepted proposal from AID " + chosenAgent);
+                    msg.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                } else {
+                    msg.setPerformative(ACLMessage.REJECT_PROPOSAL);
+                }
                 acceptances.add(msg);
             }
         }

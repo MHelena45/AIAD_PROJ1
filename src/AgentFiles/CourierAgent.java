@@ -42,7 +42,7 @@ public class CourierAgent extends Agent implements Serializable {
 
         float initialTime = calculateTotalTime();
 
-        int distance = 0;
+        float distance = 0;
         //the position of the addition doesn't matter when the size is 0 or 1
         if(listOfDeliveries.size() == 0) {
             listOfDeliveries.add(newProduct);
@@ -120,7 +120,7 @@ public class CourierAgent extends Agent implements Serializable {
 
         @Override
         public void action() {
-            ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+            ACLMessage msg = new ACLMessage(ACLMessage.SUBSCRIBE);
             try {
                 msg.setContentObject(courierAID);
             } catch (IOException e) {

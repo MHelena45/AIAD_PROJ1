@@ -1,6 +1,4 @@
-import AgentFiles.CourierAgent;
 import AgentFiles.Location;
-import AgentFiles.StoreAgent;
 import jade.core.AID;
 import jade.core.ProfileImpl;
 import jade.wrapper.AgentContainer;
