@@ -46,15 +46,15 @@ public class CourierAgent extends Agent implements Serializable {
         //the position of the addition doesn't matter when the size is 0 or 1
         if(listOfDeliveries.size() == 0) {
             listOfDeliveries.add(newProduct);
-            distance = 2 * Location.ManhattanDistance(storeLocation, newProduct.getDeliveryLocation());
+            distance = 2 * Location.manhattanDistance(storeLocation, newProduct.getDeliveryLocation());
 
-        } else if( listOfDeliveries.size() == 1) {
+        } /* else if( listOfDeliveries.size() == 1) {
             listOfDeliveries.add(newProduct);
-            distance = Location.ManhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation()) +
-                    Location.ManhattanDistance(listOfDeliveries.get(0).getDeliveryLocation(), newProduct.getDeliveryLocation()) +
-                    Location.ManhattanDistance(newProduct.getDeliveryLocation(), storeLocation);
+            distance = Location.manhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation()) +
+                    Location.manhattanDistance(listOfDeliveries.get(0).getDeliveryLocation(), newProduct.getDeliveryLocation()) +
+                    Location.manhattanDistance(newProduct.getDeliveryLocation(), storeLocation);
 
-        } else {
+        } */ else {
 
             int finalPosition = 0;
 
@@ -65,11 +65,11 @@ public class CourierAgent extends Agent implements Serializable {
                 //copy by value
                 productsCopy.add(i, newProduct);
 
-                tmpDistance += Location.ManhattanDistance(storeLocation, productsCopy.get(0).getDeliveryLocation());
-                tmpDistance += Location.ManhattanDistance(productsCopy.get(productsCopy.size() - 1).getDeliveryLocation(), storeLocation);
+                tmpDistance += Location.manhattanDistance(storeLocation, productsCopy.get(0).getDeliveryLocation());
+                tmpDistance += Location.manhattanDistance(productsCopy.get(productsCopy.size() - 1).getDeliveryLocation(), storeLocation);
 
                 for (int j = 0; j < productsCopy.size() - 1; j++) {
-                    tmpDistance += Location.ManhattanDistance(productsCopy.get(j).getDeliveryLocation(), productsCopy.get(j + 1).getDeliveryLocation());
+                    tmpDistance += Location.manhattanDistance(productsCopy.get(j).getDeliveryLocation(), productsCopy.get(j + 1).getDeliveryLocation());
                 }
 
                 //check if it was instantiated
@@ -93,15 +93,21 @@ public class CourierAgent extends Agent implements Serializable {
     }
 
     private float calculateTotalTime() { //Returns time in hours
-        Location prevLocation = storeLocation; //Starts at store location
-        float totalTime = 0;
-        for (Product product : listOfDeliveries) {
-            double distance = prevLocation.calculateDistance(product.getDeliveryLocation());
-            totalTime += distance/velocity;
-            prevLocation = product.getDeliveryLocation();
+        int distance = 0;
+        if(listOfDeliveries.size() == 0) {
+            return 0;
+        } else if( listOfDeliveries.size() == 1) {
+            distance = 2 * Location.manhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation());
+        } else {
+            distance += Location.manhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation());
+            distance += Location.manhattanDistance(listOfDeliveries.get(listOfDeliveries.size() - 1).getDeliveryLocation(), storeLocation);
+
+            for (int j = 0; j < listOfDeliveries.size() - 1; j++) {
+                distance += Location.manhattanDistance(listOfDeliveries.get(j).getDeliveryLocation(), listOfDeliveries.get(j + 1).getDeliveryLocation());
+            }
         }
 
-        return totalTime;
+        return distance/velocity;
     }
 
     class CourierCheckIn extends Behaviour {
@@ -127,7 +133,7 @@ public class CourierAgent extends Agent implements Serializable {
             send(msg);
 
             System.out.println("Checking-In");
-            checkedIn = true; //TODO Change this to true only when we recieve a response
+            checkedIn = true; //TODO Change this to true only when we receive a response
         }
 
         @Override
