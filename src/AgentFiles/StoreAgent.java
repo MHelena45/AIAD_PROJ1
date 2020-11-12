@@ -3,6 +3,7 @@ package AgentFiles;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
@@ -15,10 +16,12 @@ import java.util.Vector;
 
 public class StoreAgent extends Agent {
     private final Location storeLocation = new Location(0,0);
-    List<Product> listOfOrders;
+    public List<Product> listOfOrders;
     private List<AID> couriers;
 
     public void setup() {
+        Object[] args = getArguments();
+        this.listOfOrders = (List<Product>) args[0];
         this.couriers = new ArrayList<>();
         addBehaviour(new CheckInResponder());
         System.out.println("[STORE] Setup complete");
@@ -65,11 +68,28 @@ public class StoreAgent extends Agent {
                 send(reply);
 
                 if(couriers.size() == 5) {
-                    System.out.println("[STORE] Proposing new product...");
-                    sendDeliveryRequest(new Product(1, new Location(1, 2), 72000, 2));
+                    addBehaviour(new ProductBroadcaster(this.getAgent(), 2000));
                 }
             }
             else block();
+        }
+    }
+
+    class ProductBroadcaster extends TickerBehaviour {
+        private List<Product> products;
+
+        public ProductBroadcaster(Agent a, long period) {
+            super(a, period);
+            this.products = ((StoreAgent) this.getAgent()).listOfOrders;
+        }
+
+        @Override
+        protected void onTick() {
+            System.out.println("[STORE] Proposing new product...");
+            sendDeliveryRequest(products.get(0));
+            products.remove(0);
+            if(products.isEmpty())
+                this.stop();
         }
     }
 
@@ -125,7 +145,11 @@ public class StoreAgent extends Agent {
             for (Object response : responses) {
                 ACLMessage msg = ((ACLMessage) response).createReply();
                 if(((ACLMessage) response).getSender() == chosenAgent) {
-                    msg.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                    try {
+                        msg.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                    } catch (Exception e) {
+                        System.err.println("[STORE] Unable to send proposal acceptance.");
+                    }
                 } else {
                     msg.setPerformative(ACLMessage.REJECT_PROPOSAL);
                 }

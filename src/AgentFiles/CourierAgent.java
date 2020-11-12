@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class CourierAgent extends Agent implements Serializable {
@@ -30,16 +31,42 @@ public class CourierAgent extends Agent implements Serializable {
         maxWorkHoursPerDay = (int) args[0];
         storeLocation = (Location) args[1];
         storeAID = (AID) args[2];
+        maxCapacity = (int) args[3];
 
-        System.out.println("[" + this.getLocalName() + "] Courier created.");
-        
-        List<Integer> possibleCapacities = Arrays.asList(9, 12, 15);
-        int randomNum = ThreadLocalRandom.current().nextInt(0, 3);
-        maxCapacity = possibleCapacities.get(randomNum);;
+        System.out.println("[" + this.getLocalName() + "] Courier created, with capacity " + maxCapacity + ".");
+
         listOfDeliveries = new ArrayList<>();
 
         addBehaviour(new CourierCheckIn(this.getAID())); //Check in to the store
         addBehaviour(new FIPAContractNetResp(this, MessageTemplate.MatchPerformative(ACLMessage.CFP)));
+    }
+
+    private void addDelivery(Product product) {
+        int finalPosition = 0;
+        int distance = -1;
+        for (int i = 0; i < listOfDeliveries.size(); i++) {
+            List<Product> productsCopy = new ArrayList<>(listOfDeliveries);
+            int tmpDistance = 0;
+
+            //copy by value
+            productsCopy.add(i, product);
+
+            tmpDistance += Location.manhattanDistance(storeLocation, productsCopy.get(0).getDeliveryLocation());
+            tmpDistance += Location.manhattanDistance(productsCopy.get(productsCopy.size() - 1).getDeliveryLocation(), storeLocation);
+
+            for (int j = 0; j < productsCopy.size() - 1; j++) {
+                tmpDistance += Location.manhattanDistance(productsCopy.get(j).getDeliveryLocation(), productsCopy.get(j + 1).getDeliveryLocation());
+            }
+
+            //check if it was instantiated
+            if (distance == -1 || distance > tmpDistance) {
+                distance = tmpDistance;
+                finalPosition = i;
+            }
+        }
+
+        listOfDeliveries.add(finalPosition, product);
+        this.usedCapacity += getDeliveryTime(product);
     }
 
     /**
@@ -47,8 +74,7 @@ public class CourierAgent extends Agent implements Serializable {
      * @param newProduct product being propose
      * @return -1 if the courier can't delivery and the time added with that delivery otherwise
      */
-    private float addDelivery(Product newProduct) {
-
+    private float getDeliveryTime(Product newProduct) {
         if(usedCapacity + newProduct.getVolume() > maxCapacity) return -1;
 
         float initialTime = calculateTotalTime();
@@ -57,19 +83,13 @@ public class CourierAgent extends Agent implements Serializable {
 
         //the position of the addition doesn't matter when the size is 0 or 1
         if(listOfDeliveries.size() == 0) {
-            listOfDeliveries.add(newProduct);
             distance = 2 * Location.manhattanDistance(storeLocation, newProduct.getDeliveryLocation());
 
         }  else if( listOfDeliveries.size() == 1) {
-            listOfDeliveries.add(newProduct);
             distance = Location.manhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation()) +
                     Location.manhattanDistance(listOfDeliveries.get(0).getDeliveryLocation(), newProduct.getDeliveryLocation()) +
                     Location.manhattanDistance(newProduct.getDeliveryLocation(), storeLocation);
-
         }  else {
-
-            int finalPosition = 0;
-
             for (int i = 0; i < listOfDeliveries.size(); i++) {
                 List<Product> productsCopy = new ArrayList<>(listOfDeliveries);
                 int tmpDistance = 0;
@@ -87,21 +107,16 @@ public class CourierAgent extends Agent implements Serializable {
                 //check if it was instantiated
                 if (distance == -1 || distance > tmpDistance) {
                     distance = tmpDistance;
-                    finalPosition = i;
                 }
             }
-
-
-            listOfDeliveries.add(finalPosition, newProduct);
-            usedCapacity += newProduct.getVolume();
         }
 
         float totalTime = distance/velocity;
 
         if(totalTime > maxWorkHoursPerDay) {
-            listOfDeliveries.remove(newProduct);
             return -1;
         }
+
         else return (totalTime - initialTime);
     }
 
@@ -177,15 +192,19 @@ public class CourierAgent extends Agent implements Serializable {
                 return reply;
             }
 
-            float timeTillDelivery = addDelivery(product);
+            float timeTillDelivery = getDeliveryTime(product);
             if(timeTillDelivery == -1) {
                 System.out.println("[" + this.getAgent().getLocalName() + "] Cannot fulfill request.");
                 reply.setPerformative(ACLMessage.REFUSE);
             }
             else {
-                System.out.println("[" + this.getAgent().getLocalName() + "] Proposing value " + timeTillDelivery + ".");
-                reply.setPerformative(ACLMessage.PROPOSE);
-                reply.setContent(String.valueOf(timeTillDelivery));
+                try {
+                    reply.setPerformative(ACLMessage.PROPOSE);
+                    reply.setContent(String.valueOf(timeTillDelivery));
+                    System.out.println("[" + this.getAgent().getLocalName() + "] Proposing value " + timeTillDelivery + ".");
+                } catch (Exception e) {
+                    System.err.println("[" + this.getAgent().getLocalName() + "] Error in sending proposal.");
+                }
             }
             return reply;
         }
@@ -196,6 +215,13 @@ public class CourierAgent extends Agent implements Serializable {
 
         protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose, ACLMessage accept) {
             System.out.println("[" + this.getAgent().getLocalName() + "] Confirming delivery...");
+
+            try {
+                Product product = (Product) cfp.getContentObject();
+                addDelivery(product);
+            } catch (UnreadableException e) {
+                System.err.println("[" + this.getAgent().getLocalName() + "] Error confirming delivery");
+            }
 
             ACLMessage result = accept.createReply();
             result.setPerformative(ACLMessage.INFORM);
