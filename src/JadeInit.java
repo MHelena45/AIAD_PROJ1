@@ -34,11 +34,11 @@ public class JadeInit {
             e.printStackTrace();
             return;
         }
-        System.out.println("Store Agent created...");
+        System.out.println("[Main] Store Agent created...");
 
         AID storeAID = new AID(storeName, AID.ISLOCALNAME);
         List<AgentController> courierControllers = createCouriers(5, mainContainer, storeAID);
-        System.out.println("Courier Agents created...");
+        System.out.println("[Main] Courier Agents created...");
 
         try {
             mainContainer.start();
@@ -47,7 +47,7 @@ public class JadeInit {
             e.printStackTrace();
         }
 
-        System.out.println("Container Running....");
+        System.out.println("[Main] Container Running....");
     }
 
     private static List<AgentController> createCouriers(int numCouriers, AgentContainer mainContainer, AID storeAID) {

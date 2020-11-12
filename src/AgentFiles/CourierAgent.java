@@ -16,10 +16,12 @@ import java.util.List;
 public class CourierAgent extends Agent implements Serializable {
     private final int velocity = 40; //velocity Km/h
     private int maxWorkHoursPerDay;
-    private List<Product> listOfDeliveries;
     private int maxCapacity;
     private Location storeLocation; //start and end of the trajectory
     private AID storeAID;
+
+    private List<Product> listOfDeliveries;
+    private int usedCapacity = 0;
 
     public void setup() {
         Object[] args = getArguments();
@@ -28,6 +30,8 @@ public class CourierAgent extends Agent implements Serializable {
         maxCapacity = (int) args[2];
         listOfDeliveries = new ArrayList<>(maxCapacity);
         storeAID = (AID) args[3];
+
+        System.out.println("[" + this.getLocalName() + "] Courier created.");
 
         addBehaviour(new CourierCheckIn(this.getAID())); //Check in too store
         addBehaviour(new FIPAContractNetResp(this, MessageTemplate.MatchPerformative(ACLMessage.CFP)));
@@ -38,7 +42,7 @@ public class CourierAgent extends Agent implements Serializable {
      */
     private float addDelivery(Product newProduct) { //TODO change return type into TIMESTAMP???
 
-        if(listOfDeliveries.size() >= maxCapacity) return -1;
+        if(usedCapacity + newProduct.getVolume() > maxCapacity) return -1;
 
         float initialTime = calculateTotalTime();
 
@@ -81,6 +85,7 @@ public class CourierAgent extends Agent implements Serializable {
 
 
             listOfDeliveries.add(finalPosition, newProduct);
+            usedCapacity += newProduct.getVolume();
         }
 
         float totalTime = distance/velocity;
@@ -122,17 +127,17 @@ public class CourierAgent extends Agent implements Serializable {
         public void action() {
             ACLMessage msg = new ACLMessage(ACLMessage.SUBSCRIBE);
             try {
+                System.out.println("[" + courierAID.getLocalName() + "] Checking in...");
                 msg.setContentObject(courierAID);
             } catch (IOException e) {
                 e.printStackTrace();
-                System.err.println("Couldn't send check-In message with Courier: " + this);
+                System.err.println("[" + courierAID.getLocalName() + "] Couldn't send check-In message with Courier: " + this);
                 checkedIn = true; //Change this
                 return;
             }
             msg.addReceiver(storeAID);
             send(msg);
 
-            System.out.println("Checking-In");
             checkedIn = true; //TODO Change this to true only when we receive a response
         }
 
@@ -153,15 +158,19 @@ public class CourierAgent extends Agent implements Serializable {
             try {
                 product = (Product) cfp.getContentObject();
             } catch (UnreadableException e) {
-                System.err.println("Courier " + getAID() + " couldn't get ContentObject from " + cfp);
+                System.err.println("[" + this.getAgent().getLocalName() + "] Couldn't get ContentObject from " + cfp);
 
                 reply.setPerformative(ACLMessage.REFUSE);
                 return reply;
             }
 
             float timeTillDelivery = addDelivery(product);
-            if(timeTillDelivery == -1) reply.setPerformative(ACLMessage.REFUSE);
+            if(timeTillDelivery == -1) {
+                System.out.println("[" + this.getAgent().getLocalName() + "] Cannot fulfill request.");
+                reply.setPerformative(ACLMessage.REFUSE);
+            }
             else {
+                System.out.println("[" + this.getAgent().getLocalName() + "] Proposing value " + timeTillDelivery + ".");
                 reply.setPerformative(ACLMessage.PROPOSE);
                 reply.setContent(String.valueOf(timeTillDelivery));
             }
@@ -169,14 +178,15 @@ public class CourierAgent extends Agent implements Serializable {
         }
 
         protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
-            System.out.println(myAgent.getLocalName() + " got a reject...");
+            return;
         }
 
         protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose, ACLMessage accept) {
-            System.out.println(myAgent.getLocalName() + " got an accept!");
+            System.out.println("[" + this.getAgent().getLocalName() + "] Confirming delivery...");
+
             ACLMessage result = accept.createReply();
             result.setPerformative(ACLMessage.INFORM);
-            result.setContent("this is the result");
+            result.setContent("Confirmed delivery");
 
             return result;
         }

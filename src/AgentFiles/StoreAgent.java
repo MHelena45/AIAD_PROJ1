@@ -21,7 +21,7 @@ public class StoreAgent extends Agent {
     public void setup() {
         this.couriers = new ArrayList<>();
         addBehaviour(new CheckInResponder());
-        System.out.println("Store Setup complete");
+        System.out.println("[STORE] Setup complete");
     }
 
     private void addCourier(AID courierAgent) {
@@ -33,7 +33,7 @@ public class StoreAgent extends Agent {
         try {
             cfp.setContentObject(product);
         } catch (IOException e) {
-            System.err.println("Couldn't set content Object in CFP message with product: " + product.toString());
+            System.err.println("[STORE] Couldn't set content Object in CFP message with product: " + product.toString());
             return;
         }
 
@@ -42,32 +42,32 @@ public class StoreAgent extends Agent {
 
     class CheckInResponder extends CyclicBehaviour {
         CheckInResponder() {
-            System.out.println("Store waiting for Check-Ins");
+            System.out.println("[STORE] Waiting for check-ins...");
         }
 
         @Override
         public void action() {
             ACLMessage msg = receive(MessageTemplate.MatchPerformative(ACLMessage.SUBSCRIBE));
             if(msg != null) {
-                System.out.println(msg);
-
                 AID courierAgent;
                 try {
                     courierAgent = (AID) msg.getContentObject();
                 } catch (UnreadableException e) {
-                    System.err.println("Can't get Object from CheckIn msg");
+                    System.err.println("[STORE] Error parsing courier message.");
                     return;
                 }
                 addCourier(courierAgent);
-                System.out.println("Added " + courierAgent.getLocalName() + " To list of Couriers");
+                System.out.println("[STORE] Checked-in " + courierAgent.getLocalName() + ".");
 
                 ACLMessage reply = msg.createReply();
                 reply.setPerformative(ACLMessage.INFORM);
-                reply.setContent("Got your message!");
+                reply.setContent("Check-in received");
                 send(reply);
 
-                if(couriers.size() == 5)
-                    sendDeliveryRequest(new Product(1, new Location(1,2), 72000));
+                if(couriers.size() == 5) {
+                    System.out.println("[STORE] Proposing new product...");
+                    sendDeliveryRequest(new Product(1, new Location(1, 2), 72000, 2));
+                }
             }
             else block();
         }
@@ -89,19 +89,15 @@ public class StoreAgent extends Agent {
             }
 
             v.add(cfp);
-
-            System.out.println("Prepared all messages for cfp: " + cfp);
-
             return v;
         }
 
         protected void handleAllResponses(Vector responses, Vector acceptances) {
-            System.out.println("got " + responses.size() + " responses!");
-
             AID chosenAgent = null;
             float minTime = Float.MAX_VALUE;
             for (Object response : responses) {
-                System.out.println(((ACLMessage) response).getSender().getName() + " proposed " + ((ACLMessage) response).getContent());
+                if(((ACLMessage) response).getPerformative() == ACLMessage.REFUSE)
+                    continue;
                 float timeTaken = Float.parseFloat(((ACLMessage) response).getContent());
                 if(timeTaken < minTime) {
                     chosenAgent = ((ACLMessage) response).getSender();
@@ -109,10 +105,26 @@ public class StoreAgent extends Agent {
                 }
             }
 
+            if (chosenAgent == null)
+                System.out.println("[STORE] No agent available for delivery of product.");
+            else {
+                String offersString = "[STORE] Selected agent " + chosenAgent.getLocalName() + " for product delivery, offers were: [";
+                for(int i = 0; i < responses.size(); i++) {
+                    ACLMessage message = ((ACLMessage) responses.get(i));
+                    if(message.getPerformative() == ACLMessage.REFUSE)
+                        continue;
+                    float timeTaken = Float.parseFloat(message.getContent());
+                    offersString += message.getSender().getLocalName() + ": " + timeTaken;
+                    if (i != responses.size() - 1)
+                        offersString += "; ";
+                }
+                offersString += "]";
+                System.out.println(offersString);
+            }
+
             for (Object response : responses) {
                 ACLMessage msg = ((ACLMessage) response).createReply();
                 if(((ACLMessage) response).getSender() == chosenAgent) {
-                    System.out.println("Accepted proposal from AID " + chosenAgent);
                     msg.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
                 } else {
                     msg.setPerformative(ACLMessage.REJECT_PROPOSAL);
@@ -122,7 +134,7 @@ public class StoreAgent extends Agent {
         }
 
         protected void handleAllResultNotifications(Vector resultNotifications) {
-            System.out.println("got " + resultNotifications.size() + " result notifs!");
+            System.out.println("[STORE] Agent " + ((ACLMessage)resultNotifications.get(0)).getSender().getLocalName() + " confirmed product delivery.");
         }
 
     }

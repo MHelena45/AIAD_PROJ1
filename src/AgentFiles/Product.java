@@ -5,12 +5,14 @@ import java.io.Serializable;
 public class Product implements Serializable {
     private int id;
     private Location deliveryLocation;
-    private int timeToDeliver; //TODO change this into a timestamp format? We need to decide a way to track time
+    private int timeToDeliver;
+    private int volume;
 
-    public Product(int id, Location deliveryLocation, int timeToDeliver) {
+    public Product(int id, Location deliveryLocation, int timeToDeliver, int volume) {
         this.id = id;
         this.deliveryLocation = deliveryLocation;
         this.timeToDeliver = timeToDeliver;
+        this.volume = volume;
     }
 
 
@@ -20,5 +22,9 @@ public class Product implements Serializable {
 
     public int getId() {
         return id;
+    }
+
+    public int getVolume() {
+        return volume;
     }
 }
