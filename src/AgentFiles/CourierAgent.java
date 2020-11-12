@@ -11,7 +11,9 @@ import jade.proto.ContractNetResponder;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class CourierAgent extends Agent implements Serializable {
     private final int velocity = 40; //velocity Km/h
@@ -27,38 +29,44 @@ public class CourierAgent extends Agent implements Serializable {
         Object[] args = getArguments();
         maxWorkHoursPerDay = (int) args[0];
         storeLocation = (Location) args[1];
-        maxCapacity = (int) args[2];
-        listOfDeliveries = new ArrayList<>(maxCapacity);
-        storeAID = (AID) args[3];
+        storeAID = (AID) args[2];
 
         System.out.println("[" + this.getLocalName() + "] Courier created.");
+        
+        List<Integer> possibleCapacities = Arrays.asList(9, 12, 15);
+        int randomNum = ThreadLocalRandom.current().nextInt(0, 3);
+        maxCapacity = possibleCapacities.get(randomNum);;
+        listOfDeliveries = new ArrayList<>();
 
-        addBehaviour(new CourierCheckIn(this.getAID())); //Check in too store
+        addBehaviour(new CourierCheckIn(this.getAID())); //Check in to the store
         addBehaviour(new FIPAContractNetResp(this, MessageTemplate.MatchPerformative(ACLMessage.CFP)));
     }
 
-    /*
-        returns the time added with that delivery
+    /**
+     * checks if the courier can accept the package
+     * @param newProduct product being propose
+     * @return -1 if the courier can't delivery and the time added with that delivery otherwise
      */
-    private float addDelivery(Product newProduct) { //TODO change return type into TIMESTAMP???
+    private float addDelivery(Product newProduct) {
 
         if(usedCapacity + newProduct.getVolume() > maxCapacity) return -1;
 
         float initialTime = calculateTotalTime();
 
         float distance = 0;
+
         //the position of the addition doesn't matter when the size is 0 or 1
         if(listOfDeliveries.size() == 0) {
             listOfDeliveries.add(newProduct);
             distance = 2 * Location.manhattanDistance(storeLocation, newProduct.getDeliveryLocation());
 
-        } /* else if( listOfDeliveries.size() == 1) {
+        }  else if( listOfDeliveries.size() == 1) {
             listOfDeliveries.add(newProduct);
             distance = Location.manhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation()) +
                     Location.manhattanDistance(listOfDeliveries.get(0).getDeliveryLocation(), newProduct.getDeliveryLocation()) +
                     Location.manhattanDistance(newProduct.getDeliveryLocation(), storeLocation);
 
-        } */ else {
+        }  else {
 
             int finalPosition = 0;
 
@@ -97,11 +105,16 @@ public class CourierAgent extends Agent implements Serializable {
         else return (totalTime - initialTime);
     }
 
-    private float calculateTotalTime() { //Returns time in hours
-        int distance = 0;
+    /**
+     * calculates the need time to delivery all packages assign
+     * @return time in hours
+     */
+    private float calculateTotalTime() {
+        float distance = 0;
         if(listOfDeliveries.size() == 0) {
             return 0;
         } else if( listOfDeliveries.size() == 1) {
+            //path is delivery and came back
             distance = 2 * Location.manhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation());
         } else {
             distance += Location.manhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation());

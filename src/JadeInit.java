@@ -25,7 +25,7 @@ public class JadeInit {
 
         //Add agents
         AgentController storeController;
-        String storeName = "Loja Da Dina";
+        String storeName = "Dina's store";
         try {
             storeController = mainContainer.createNewAgent(storeName, "AgentFiles.StoreAgent", null);
             storeController.start();
@@ -53,10 +53,9 @@ public class JadeInit {
     private static List<AgentController> createCouriers(int numCouriers, AgentContainer mainContainer, AID storeAID) {
         List<AgentController> courierControllers = new ArrayList<>();
         for(int i = 1; i <= numCouriers; i++) {
-            int capacity = new Random().nextInt(4) + 6;
             int hours = new Random().nextInt(2) + 8;
             Object[] args = new Object[4];
-            args[0] = hours; args[1] = storeLocation; args[2] = capacity; args[3] = storeAID;
+            args[0] = hours; args[1] = storeLocation; args[2] = storeAID;
 
             try {
                 AgentController courierController = mainContainer.createNewAgent("Courier"+i,"AgentFiles.CourierAgent", args);
