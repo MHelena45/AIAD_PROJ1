@@ -41,6 +41,10 @@ public class CourierAgent extends Agent implements Serializable {
         addBehaviour(new FIPAContractNetResp(this, MessageTemplate.MatchPerformative(ACLMessage.CFP)));
     }
 
+    /**
+     * Adds delivery in the correct place
+     * @param product product being 
+     */
     private void addDelivery(Product product) {
         int finalPosition = 0;
         int distance = -1;
@@ -66,7 +70,7 @@ public class CourierAgent extends Agent implements Serializable {
         }
 
         listOfDeliveries.add(finalPosition, product);
-        this.usedCapacity += getDeliveryTime(product);
+        this.usedCapacity += product.getVolume();
     }
 
     /**
@@ -75,6 +79,7 @@ public class CourierAgent extends Agent implements Serializable {
      * @return -1 if the courier can't delivery and the time added with that delivery otherwise
      */
     private float getDeliveryTime(Product newProduct) {
+        //check if there is still capacity
         if(usedCapacity + newProduct.getVolume() > maxCapacity) return -1;
 
         float initialTime = calculateTotalTime();
@@ -126,8 +131,10 @@ public class CourierAgent extends Agent implements Serializable {
      */
     private float calculateTotalTime() {
         float distance = 0;
+
         if(listOfDeliveries.size() == 0) {
             return 0;
+
         } else if( listOfDeliveries.size() == 1) {
             //path is delivery and came back
             distance = 2 * Location.manhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation());
