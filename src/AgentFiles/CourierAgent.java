@@ -79,7 +79,7 @@ public class CourierAgent extends Agent implements Serializable {
         List<Product> productsCopy = new ArrayList<>(listOfDeliveries);
         addDelivery(newProduct, productsCopy);
         float totalTime = calculateTotalTime(productsCopy);
-        
+
         if(totalTime > maxWorkHoursPerDay) {
             return -1;
         }

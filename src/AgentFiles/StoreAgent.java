@@ -19,6 +19,7 @@ public class StoreAgent extends Agent {
     public List<Product> listOfOrders;
     private List<AID> couriers;
     private int expectedNumbebrOfCourriers;
+    private boolean busy = false;
 
     public void setup() {
         Object[] args = getArguments();
@@ -87,6 +88,7 @@ public class StoreAgent extends Agent {
 
         @Override
         protected void onTick() {
+            if(busy) return;
             Product product = products.get(0);
             System.out.println("[STORE] Proposing new product: (size: " + product.getVolume() + ", location: <" + product.getDeliveryLocation().getX() + "," + product.getDeliveryLocation().getY() + ">)");
             sendDeliveryRequest(product);
@@ -112,6 +114,7 @@ public class StoreAgent extends Agent {
             }
 
             v.add(cfp);
+            busy = true;
             return v;
         }
 
@@ -162,6 +165,7 @@ public class StoreAgent extends Agent {
 
         protected void handleAllResultNotifications(Vector resultNotifications) {
             System.out.println("[STORE] Agent " + ((ACLMessage)resultNotifications.get(0)).getSender().getLocalName() + " confirmed product delivery.");
+            busy = false;
         }
 
     }
