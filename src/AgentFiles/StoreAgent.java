@@ -10,28 +10,45 @@ import jade.lang.acl.UnreadableException;
 import jade.proto.ContractNetInitiator;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 public class StoreAgent extends Agent {
     private final Location storeLocation = new Location(0,0);
-    public List<Product> listOfOrders;
+    private List<Product> listOfOrders;
     private List<AID> couriers;
-    private int expectedNumbebrOfCourriers;
-    private boolean busy = false;
+    private int expectedNumberOfCouriers;
+    private volatile boolean busy = false;
+    private int totalPackageNumber;
+    private int rejectedPackagesNumber;
+    private Hashtable<AID, Float> usedCouriers = new Hashtable<>();
 
     public void setup() {
         Object[] args = getArguments();
         this.listOfOrders = (List<Product>) args[0];
-        this.expectedNumbebrOfCourriers = (int) args[1];
+        this.expectedNumberOfCouriers = (int) args[1];
         this.couriers = new ArrayList<>();
+        this.totalPackageNumber = listOfOrders.size();
         addBehaviour(new CheckInResponder());
         System.out.println("[STORE] Setup complete");
     }
 
     private void addCourier(AID courierAgent) {
         this.couriers.add(courierAgent);
+    }
+
+    private void printOutput() {
+        System.out.println("[OUTPUT]:");
+        System.out.println("\t- Rejected " + rejectedPackagesNumber + " out of " + totalPackageNumber + " Packages");
+        System.out.println("\t- Used " + usedCouriers.size() + " out of " + couriers.size() + " Couriers");
+        float totalDist = 0f;
+        Set<AID> keys = usedCouriers.keySet();
+        Iterator<AID> itr = keys.iterator();
+        AID key;
+        while (itr.hasNext()) {
+            key = itr.next();
+            totalDist += usedCouriers.get(key);
+        }
+        System.out.println("\t- Total Distance: " + totalDist + " km");
     }
 
     private void sendDeliveryRequest(Product product) { //Call this when we want to send a delivery request to our Couriers
@@ -70,8 +87,8 @@ public class StoreAgent extends Agent {
                 reply.setContent("Check-in received");
                 send(reply);
 
-                if(couriers.size() == expectedNumbebrOfCourriers) {
-                    addBehaviour(new ProductBroadcaster(this.getAgent(), 2000));
+                if(couriers.size() == expectedNumberOfCouriers) {
+                    addBehaviour(new ProductBroadcaster(this.getAgent(), 1000));
                 }
             }
             else block();
@@ -89,12 +106,23 @@ public class StoreAgent extends Agent {
         @Override
         protected void onTick() {
             if(busy) return;
+            else busy = true;
             Product product = products.get(0);
             System.out.println("[STORE] Proposing new product: (size: " + product.getVolume() + ", location: <" + product.getDeliveryLocation().getX() + "," + product.getDeliveryLocation().getY() + ">)");
             sendDeliveryRequest(product);
             products.remove(0);
-            if(products.isEmpty())
+            if(products.isEmpty()) {
+                new java.util.Timer().schedule(
+                        new java.util.TimerTask() {
+                            @Override
+                            public void run() {
+                                printOutput();
+                            }
+                        },
+                        1000
+                );
                 this.stop();
+            }
         }
     }
 
@@ -114,7 +142,6 @@ public class StoreAgent extends Agent {
             }
 
             v.add(cfp);
-            busy = true;
             return v;
         }
 
@@ -131,8 +158,11 @@ public class StoreAgent extends Agent {
                 }
             }
 
-            if (chosenAgent == null)
+            if (chosenAgent == null) {
+                rejectedPackagesNumber++;
+                busy = false;
                 System.out.println("[STORE] No agent available for delivery of product.");
+            }
             else {
                 String offersString = "[STORE] Selected agent " + chosenAgent.getLocalName() + " for product delivery, offers were: [";
                 for(int i = 0; i < responses.size(); i++) {
@@ -165,6 +195,19 @@ public class StoreAgent extends Agent {
 
         protected void handleAllResultNotifications(Vector resultNotifications) {
             System.out.println("[STORE] Agent " + ((ACLMessage)resultNotifications.get(0)).getSender().getLocalName() + " confirmed product delivery.");
+            float totalDist = 0f;
+            AID sender = ((ACLMessage)resultNotifications.get(0)).getSender();
+            try {
+                totalDist = (float) ((ACLMessage)resultNotifications.get(0)).getContentObject();
+            } catch (UnreadableException e) {
+                System.err.println("[STORE] Unable to red courier total time.");
+            }
+            if(!usedCouriers.contains(sender)) {
+                usedCouriers.put(sender, totalDist);
+            }
+            else {
+                usedCouriers.replace(sender, totalDist);
+            }
             busy = false;
         }
 

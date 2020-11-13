@@ -199,7 +199,12 @@ public class CourierAgent extends Agent implements Serializable {
 
             ACLMessage result = accept.createReply();
             result.setPerformative(ACLMessage.INFORM);
-            result.setContent("Confirmed delivery");
+            float totalTime = calculateTotalTime(listOfDeliveries);
+            try {
+                result.setContentObject(totalTime * velocity); //Confirm delivery with current total distance
+            } catch (IOException e) {
+                System.err.println("[" + this.getAgent().getLocalName() + "] Error setting totalTime response");
+            }
 
             return result;
         }
