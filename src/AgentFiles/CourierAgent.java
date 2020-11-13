@@ -10,11 +10,10 @@ import jade.proto.ContractNetResponder;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class CourierAgent extends Agent implements Serializable {
     private final int velocity = 40; //velocity Km/h
@@ -43,26 +42,18 @@ public class CourierAgent extends Agent implements Serializable {
 
     /**
      * Adds delivery in the correct place
-     * @param product product being 
+     * @param product product being
+     * @param listOfDeliveries list where product should be added (usually class attribute)
      */
-    private void addDelivery(Product product) {
+    private void addDelivery(Product product, List<Product> listOfDeliveries) {
         int finalPosition = 0;
-        int distance = -1;
+        float distance = -1;
         for (int i = 0; i < listOfDeliveries.size(); i++) {
             List<Product> productsCopy = new ArrayList<>(listOfDeliveries);
-            int tmpDistance = 0;
-
-            //copy by value
             productsCopy.add(i, product);
+            float tmpDistance = calculateTotalTime(productsCopy);
 
-            tmpDistance += Location.manhattanDistance(storeLocation, productsCopy.get(0).getDeliveryLocation());
-            tmpDistance += Location.manhattanDistance(productsCopy.get(productsCopy.size() - 1).getDeliveryLocation(), storeLocation);
-
-            for (int j = 0; j < productsCopy.size() - 1; j++) {
-                tmpDistance += Location.manhattanDistance(productsCopy.get(j).getDeliveryLocation(), productsCopy.get(j + 1).getDeliveryLocation());
-            }
-
-            //check if it was instantiated
+            //check if it was instantiated or current value is smaller
             if (distance == -1 || distance > tmpDistance) {
                 distance = tmpDistance;
                 finalPosition = i;
@@ -70,7 +61,8 @@ public class CourierAgent extends Agent implements Serializable {
         }
 
         listOfDeliveries.add(finalPosition, product);
-        this.usedCapacity += product.getVolume();
+
+        if(listOfDeliveries.equals(this.listOfDeliveries)) this.usedCapacity += product.getVolume(); //only if we're adding to the class list
     }
 
     /**
@@ -82,69 +74,44 @@ public class CourierAgent extends Agent implements Serializable {
         //check if there is still capacity
         if(usedCapacity + newProduct.getVolume() > maxCapacity) return -1;
 
-        float initialTime = calculateTotalTime();
+        float initialTime = calculateTotalTime(listOfDeliveries);
 
-        float distance = 0;
-
-        //the position of the addition doesn't matter when the size is 0 or 1
-        if(listOfDeliveries.size() == 0) {
-            distance = 2 * Location.manhattanDistance(storeLocation, newProduct.getDeliveryLocation());
-
-        }  else if( listOfDeliveries.size() == 1) {
-            distance = Location.manhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation()) +
-                    Location.manhattanDistance(listOfDeliveries.get(0).getDeliveryLocation(), newProduct.getDeliveryLocation()) +
-                    Location.manhattanDistance(newProduct.getDeliveryLocation(), storeLocation);
-        }  else {
-            for (int i = 0; i < listOfDeliveries.size(); i++) {
-                List<Product> productsCopy = new ArrayList<>(listOfDeliveries);
-                int tmpDistance = 0;
-
-                //copy by value
-                productsCopy.add(i, newProduct);
-
-                tmpDistance += Location.manhattanDistance(storeLocation, productsCopy.get(0).getDeliveryLocation());
-                tmpDistance += Location.manhattanDistance(productsCopy.get(productsCopy.size() - 1).getDeliveryLocation(), storeLocation);
-
-                for (int j = 0; j < productsCopy.size() - 1; j++) {
-                    tmpDistance += Location.manhattanDistance(productsCopy.get(j).getDeliveryLocation(), productsCopy.get(j + 1).getDeliveryLocation());
-                }
-
-                //check if it was instantiated
-                if (distance == -1 || distance > tmpDistance) {
-                    distance = tmpDistance;
-                }
-            }
-        }
-
-        float totalTime = distance/velocity;
-
+        List<Product> productsCopy = new ArrayList<>(listOfDeliveries);
+        addDelivery(newProduct, productsCopy);
+        float totalTime = calculateTotalTime(productsCopy);
+        
         if(totalTime > maxWorkHoursPerDay) {
             return -1;
         }
-
-        else return (totalTime - initialTime);
+        else {
+            float result = totalTime - initialTime;
+            BigDecimal bigDecimal = new BigDecimal(result).setScale(2, RoundingMode.HALF_UP);
+            return bigDecimal.floatValue();
+        }
     }
 
     /**
      * calculates the need time to delivery all packages assign
      * @return time in hours
+     * @param listOfDeliveries list of products to deliver (usually the class attribute)
      */
-    private float calculateTotalTime() {
+    private float calculateTotalTime(List<Product> listOfDeliveries) {
         float distance = 0;
 
         if(listOfDeliveries.size() == 0) {
             return 0;
 
-        } else if( listOfDeliveries.size() == 1) {
+        } else if(listOfDeliveries.size() == 1) {
             //path is delivery and came back
             distance = 2 * Location.manhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation());
         } else {
             distance += Location.manhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation());
-            distance += Location.manhattanDistance(listOfDeliveries.get(listOfDeliveries.size() - 1).getDeliveryLocation(), storeLocation);
 
             for (int j = 0; j < listOfDeliveries.size() - 1; j++) {
                 distance += Location.manhattanDistance(listOfDeliveries.get(j).getDeliveryLocation(), listOfDeliveries.get(j + 1).getDeliveryLocation());
             }
+
+            distance += Location.manhattanDistance(listOfDeliveries.get(listOfDeliveries.size() - 1).getDeliveryLocation(), storeLocation);
         }
 
         return distance/velocity;
@@ -225,7 +192,7 @@ public class CourierAgent extends Agent implements Serializable {
 
             try {
                 Product product = (Product) cfp.getContentObject();
-                addDelivery(product);
+                addDelivery(product, listOfDeliveries);
             } catch (UnreadableException e) {
                 System.err.println("[" + this.getAgent().getLocalName() + "] Error confirming delivery");
             }

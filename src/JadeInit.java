@@ -54,8 +54,9 @@ public class JadeInit {
         AgentController storeController;
         String storeName = "Dina's store";
         List<Product> storeProducts = createProducts(numPackages);
-        Object storeArgs[] = new Object[1];
+        Object storeArgs[] = new Object[2];
         storeArgs[0] = storeProducts;
+        storeArgs[1] = numCouriers;
         try {
             storeController = mainContainer.createNewAgent(storeName, "AgentFiles.StoreAgent", storeArgs);
             storeController.start();

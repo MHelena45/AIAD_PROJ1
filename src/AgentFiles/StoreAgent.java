@@ -18,10 +18,12 @@ public class StoreAgent extends Agent {
     private final Location storeLocation = new Location(0,0);
     public List<Product> listOfOrders;
     private List<AID> couriers;
+    private int expectedNumbebrOfCourriers;
 
     public void setup() {
         Object[] args = getArguments();
         this.listOfOrders = (List<Product>) args[0];
+        this.expectedNumbebrOfCourriers = (int) args[1];
         this.couriers = new ArrayList<>();
         addBehaviour(new CheckInResponder());
         System.out.println("[STORE] Setup complete");
@@ -67,7 +69,7 @@ public class StoreAgent extends Agent {
                 reply.setContent("Check-in received");
                 send(reply);
 
-                if(couriers.size() == 5) {
+                if(couriers.size() == expectedNumbebrOfCourriers) {
                     addBehaviour(new ProductBroadcaster(this.getAgent(), 2000));
                 }
             }
@@ -85,8 +87,9 @@ public class StoreAgent extends Agent {
 
         @Override
         protected void onTick() {
-            System.out.println("[STORE] Proposing new product...");
-            sendDeliveryRequest(products.get(0));
+            Product product = products.get(0);
+            System.out.println("[STORE] Proposing new product: (size: " + product.getVolume() + ", location: <" + product.getDeliveryLocation().getX() + "," + product.getDeliveryLocation().getY() + ">)");
+            sendDeliveryRequest(product);
             products.remove(0);
             if(products.isEmpty())
                 this.stop();

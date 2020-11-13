@@ -20,4 +20,12 @@ public class Location implements Serializable {
     public static int manhattanDistance(Location L1, Location L2) {
         return Math.abs(L1.x - L2.x) + Math.abs(L1.y - L2.y);
     }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
 }
