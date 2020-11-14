@@ -85,7 +85,7 @@ public class JadeInit {
     private static List<Product> createProducts(int numProducts) {
         List<Product> products = new ArrayList<>();
         for (int i = 1; i <= numProducts; i++) {
-            Product newProduct = new Product(i, new Location(generator.nextInt(21) - 10, generator.nextInt(21) - 10), 72000, generator.nextInt(3) + 1);
+            Product newProduct = new Product(i, new Location(generator.nextInt(21) - 10, generator.nextInt(21) - 10), generator.nextInt(3) + 1);
             products.add(newProduct);
         }
         return products;

@@ -5,13 +5,11 @@ import java.io.Serializable;
 public class Product implements Serializable {
     private int id;
     private Location deliveryLocation;
-    private int timeToDeliver;
     private int volume;
 
-    public Product(int id, Location deliveryLocation, int timeToDeliver, int volume) {
+    public Product(int id, Location deliveryLocation, int volume) {
         this.id = id;
         this.deliveryLocation = deliveryLocation;
-        this.timeToDeliver = timeToDeliver;
         this.volume = volume;
     }
 
