@@ -17,7 +17,7 @@ import java.util.List;
 
 public class CourierAgent extends Agent implements Serializable {
     private final int velocity = 40; //velocity Km/h
-    private int maxWorkHoursPerDay;
+    private int maxWorkHoursPerDay, algorithm;
     private int maxCapacity;
     private Location storeLocation; //start and end of the trajectory
     private AID storeAID;
@@ -31,6 +31,7 @@ public class CourierAgent extends Agent implements Serializable {
         storeLocation = (Location) args[1];
         storeAID = (AID) args[2];
         maxCapacity = (int) args[3];
+        algorithm = (int) args[4];
 
         System.out.println("[" + this.getLocalName() + "] Courier created, with capacity " + maxCapacity + ".");
 
@@ -74,8 +75,6 @@ public class CourierAgent extends Agent implements Serializable {
         //check if there is still capacity
         if(usedCapacity + newProduct.getVolume() > maxCapacity) return -1;
 
-        float initialTime = calculateTotalTime(listOfDeliveries);
-
         List<Product> productsCopy = new ArrayList<>(listOfDeliveries);
         addDelivery(newProduct, productsCopy);
         float totalTime = calculateTotalTime(productsCopy);
@@ -84,7 +83,20 @@ public class CourierAgent extends Agent implements Serializable {
             return -1;
         }
         else {
-            float result = totalTime - initialTime;
+            float result;
+            if(algorithm == 1) {
+                float initialTime = calculateTotalTime(listOfDeliveries);
+                result = totalTime - initialTime;
+            } else if( algorithm == 3){
+                result = totalTime;
+            } else {
+                if(listOfDeliveries.size() == 0) {
+                    result = maxWorkHoursPerDay + 1;
+                } else {
+                    result = totalTime;
+                }
+            }
+
             BigDecimal bigDecimal = new BigDecimal(result).setScale(2, RoundingMode.HALF_UP);
             return bigDecimal.floatValue();
         }

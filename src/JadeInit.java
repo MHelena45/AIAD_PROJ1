@@ -37,6 +37,11 @@ public class JadeInit {
                 System.err.println("Must have 1 or more packages");
                 return;
             }
+
+            if(algorithm >= 1 && algorithm <= 3) {
+                System.err.println("Must have 1 or more packages");
+                return;
+            }
         } catch (Exception e) {
             System.err.println("Arguments provided are not valid, aborting...");
             return;
@@ -68,7 +73,7 @@ public class JadeInit {
         System.out.println("[Main] Store Agent created...");
 
         AID storeAID = new AID(storeName, AID.ISLOCALNAME);
-        List<AgentController> courierControllers = createCouriers(numCouriers, mainContainer, storeAID);
+        List<AgentController> courierControllers = createCouriers(numCouriers, mainContainer, storeAID, Integer.parseInt(args[2]));
         System.out.println("[Main] Courier Agents created...");
 
         try {
@@ -91,7 +96,7 @@ public class JadeInit {
         return products;
     }
 
-    private static List<AgentController> createCouriers(int numCouriers, AgentContainer mainContainer, AID storeAID) {
+    private static List<AgentController> createCouriers(int numCouriers, AgentContainer mainContainer, AID storeAID, int algorithm) {
         List<AgentController> courierControllers = new ArrayList<>();
         for(int i = 1; i <= numCouriers; i++) {
             int hours = new Random().nextInt(2) + 8;
@@ -99,6 +104,7 @@ public class JadeInit {
             args[0] = hours;
             args[1] = storeLocation;
             args[2] = storeAID;
+            args[3] = algorithm;
 
             generator.nextInt(3);
             List<Integer> possibleCapacities = Arrays.asList(9, 12, 15);
