@@ -1,3 +1,4 @@
+import AgentFiles.AlgorithmUsed;
 import AgentFiles.Location;
 import AgentFiles.Product;
 import jade.core.AID;
@@ -38,8 +39,8 @@ public class JadeInit {
                 return;
             }
 
-            if(algorithm >= 1 && algorithm <= 3) {
-                System.err.println("Must have 1 or more packages");
+            if(algorithm < 0 || algorithm > 2) {
+                System.err.println("Invalid Algorithm, choose from 0, 1 or 2");
                 return;
             }
         } catch (Exception e) {
@@ -100,11 +101,11 @@ public class JadeInit {
         List<AgentController> courierControllers = new ArrayList<>();
         for(int i = 1; i <= numCouriers; i++) {
             int hours = new Random().nextInt(2) + 8;
-            Object[] args = new Object[4];
+            Object[] args = new Object[5];
             args[0] = hours;
             args[1] = storeLocation;
             args[2] = storeAID;
-            args[3] = algorithm;
+            args[4] = AlgorithmUsed.values()[algorithm];
 
             generator.nextInt(3);
             List<Integer> possibleCapacities = Arrays.asList(9, 12, 15);

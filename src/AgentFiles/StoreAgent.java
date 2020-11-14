@@ -10,6 +10,8 @@ import jade.lang.acl.UnreadableException;
 import jade.proto.ContractNetInitiator;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 public class StoreAgent extends Agent {
@@ -20,7 +22,31 @@ public class StoreAgent extends Agent {
     private volatile boolean busy = false;
     private int totalPackageNumber;
     private int rejectedPackagesNumber;
-    private Hashtable<AID, Float> usedCouriers = new Hashtable<>();
+    private Hashtable<AID, CourierTuple> usedCouriers = new Hashtable<>();
+
+    private class CourierTuple {
+        private float distance;
+        private int numPackages;
+
+        public CourierTuple(float distance, int numPackages) {
+            this.distance = distance;
+            this.numPackages = numPackages;
+        }
+
+        public int getNumPackages() {
+            return numPackages;
+        }
+
+        public float getDistance() {
+            return distance;
+        }
+
+        public void addNewPackage(float distance) {
+            this.distance = distance;
+            numPackages++;
+        }
+    }
+
 
     public void setup() {
         Object[] args = getArguments();
@@ -41,14 +67,20 @@ public class StoreAgent extends Agent {
         System.out.println("\t- Rejected " + rejectedPackagesNumber + " out of " + totalPackageNumber + " Packages");
         System.out.println("\t- Used " + usedCouriers.size() + " out of " + couriers.size() + " Couriers");
         float totalDist = 0f;
+        float avgTime = 0;
         Set<AID> keys = usedCouriers.keySet();
         Iterator<AID> itr = keys.iterator();
         AID key;
         while (itr.hasNext()) {
             key = itr.next();
-            totalDist += usedCouriers.get(key);
+            totalDist += usedCouriers.get(key).getDistance();
+            avgTime += usedCouriers.get(key).getNumPackages() / (totalDist / 40);
         }
+        avgTime /= usedCouriers.size();
         System.out.println("\t- Total Distance: " + totalDist + " km");
+
+        BigDecimal bigDecimal = new BigDecimal(avgTime).setScale(2, RoundingMode.HALF_UP);
+        System.out.println("\t- Average Time To Deliver Packages: " + bigDecimal.floatValue() + " h");
     }
 
     private void sendDeliveryRequest(Product product) { //Call this when we want to send a delivery request to our Couriers
@@ -203,10 +235,12 @@ public class StoreAgent extends Agent {
                 System.err.println("[STORE] Unable to red courier total time.");
             }
             if(!usedCouriers.contains(sender)) {
-                usedCouriers.put(sender, totalDist);
+                CourierTuple tuple = new CourierTuple(totalDist,1);
+                usedCouriers.put(sender, tuple);
             }
             else {
-                usedCouriers.replace(sender, totalDist);
+                CourierTuple tuple = usedCouriers.get(sender);
+                tuple.addNewPackage(totalDist);
             }
             busy = false;
         }

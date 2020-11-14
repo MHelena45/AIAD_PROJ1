@@ -17,7 +17,8 @@ import java.util.List;
 
 public class CourierAgent extends Agent implements Serializable {
     private final int velocity = 40; //velocity Km/h
-    private int maxWorkHoursPerDay, algorithm;
+    private int maxWorkHoursPerDay;
+    private AlgorithmUsed algorithm;
     private int maxCapacity;
     private Location storeLocation; //start and end of the trajectory
     private AID storeAID;
@@ -31,7 +32,7 @@ public class CourierAgent extends Agent implements Serializable {
         storeLocation = (Location) args[1];
         storeAID = (AID) args[2];
         maxCapacity = (int) args[3];
-        algorithm = (int) args[4];
+        algorithm = (AlgorithmUsed) args[4];
 
         System.out.println("[" + this.getLocalName() + "] Courier created, with capacity " + maxCapacity + ".");
 
@@ -78,16 +79,17 @@ public class CourierAgent extends Agent implements Serializable {
         List<Product> productsCopy = new ArrayList<>(listOfDeliveries);
         addDelivery(newProduct, productsCopy);
         float totalTime = calculateTotalTime(productsCopy);
+        if(productsCopy.size() == 1) totalTime /= 2; //Used only to minimize Distance
 
         if(totalTime > maxWorkHoursPerDay) {
             return -1;
         }
         else {
             float result;
-            if(algorithm == 1) {
+            if(algorithm == AlgorithmUsed.MinimizeDistance) {
                 float initialTime = calculateTotalTime(listOfDeliveries);
                 result = totalTime - initialTime;
-            } else if( algorithm == 3){
+            } else if( algorithm == AlgorithmUsed.MinimizeTimeToDelivery){
                 result = totalTime;
             } else {
                 float initialTime = calculateTotalTime(listOfDeliveries);
