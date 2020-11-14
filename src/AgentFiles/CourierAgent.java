@@ -90,10 +90,12 @@ public class CourierAgent extends Agent implements Serializable {
             } else if( algorithm == 3){
                 result = totalTime;
             } else {
+                float initialTime = calculateTotalTime(listOfDeliveries);
+
                 if(listOfDeliveries.size() == 0) {
                     result = maxWorkHoursPerDay + 1;
                 } else {
-                    result = totalTime;
+                    result = totalTime - initialTime;
                 }
             }
 
