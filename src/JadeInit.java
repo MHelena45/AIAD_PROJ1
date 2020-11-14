@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class JadeInit {
     private static Random generator = new Random(1234);
@@ -24,10 +23,11 @@ public class JadeInit {
             return;
         }
 
-        int numCouriers, numPackages;
+        int numCouriers, numPackages, algorithm;
         try {
             numCouriers = Integer.parseInt(args[0]);
             numPackages = Integer.parseInt(args[1]);
+            algorithm = Integer.parseInt(args[2]);
             if(numCouriers <= 0) {
                 System.err.println("Must have 1 or more couriers");
                 return;

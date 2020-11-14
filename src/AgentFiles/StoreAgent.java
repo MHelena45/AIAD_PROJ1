@@ -88,7 +88,7 @@ public class StoreAgent extends Agent {
                 send(reply);
 
                 if(couriers.size() == expectedNumberOfCouriers) {
-                    addBehaviour(new ProductBroadcaster(this.getAgent(), 1000));
+                    addBehaviour(new ProductBroadcaster(this.getAgent(), 100));
                 }
             }
             else block();
