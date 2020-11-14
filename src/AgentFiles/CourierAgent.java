@@ -79,19 +79,19 @@ public class CourierAgent extends Agent implements Serializable {
         List<Product> productsCopy = new ArrayList<>(listOfDeliveries);
         addDelivery(newProduct, productsCopy);
         float totalTime = calculateTotalTime(productsCopy);
-        if(productsCopy.size() == 1) totalTime /= 2; //Used only to minimize Distance
 
         if(totalTime > maxWorkHoursPerDay) {
             return -1;
         }
         else {
-            float result;
+            float result = 0f;
             if(algorithm == AlgorithmUsed.MinimizeDistance) {
+                if(productsCopy.size() == 1) totalTime /= 2; //This makes it easier to use several cars. Thus minimizing the distance
                 float initialTime = calculateTotalTime(listOfDeliveries);
                 result = totalTime - initialTime;
             } else if( algorithm == AlgorithmUsed.MinimizeTimeToDelivery){
                 result = totalTime;
-            } else {
+            } else if(algorithm == AlgorithmUsed.MinimizeCars){
                 float initialTime = calculateTotalTime(listOfDeliveries);
 
                 if(listOfDeliveries.size() == 0) {

@@ -43,7 +43,7 @@ public class StoreAgent extends Agent {
 
         public void addNewPackage(float distance) {
             this.distance = distance;
-            numPackages++;
+            this.numPackages++;
         }
     }
 
@@ -74,13 +74,14 @@ public class StoreAgent extends Agent {
         while (itr.hasNext()) {
             key = itr.next();
             totalDist += usedCouriers.get(key).getDistance();
-            avgTime += usedCouriers.get(key).getNumPackages() / (totalDist / 40);
+            float time = usedCouriers.get(key).getDistance() / 40; //40 because velocity is 40km/h
+            avgTime += time / usedCouriers.get(key).getNumPackages();
         }
         avgTime /= usedCouriers.size();
         System.out.println("\t- Total Distance: " + totalDist + " km");
 
         BigDecimal bigDecimal = new BigDecimal(avgTime).setScale(2, RoundingMode.HALF_UP);
-        System.out.println("\t- Average Time To Deliver Packages: " + bigDecimal.floatValue() + " h");
+        System.out.println("\t- Average Time To Deliver 1 Package: " + bigDecimal.floatValue() + " h");
     }
 
     private void sendDeliveryRequest(Product product) { //Call this when we want to send a delivery request to our Couriers
@@ -234,7 +235,7 @@ public class StoreAgent extends Agent {
             } catch (UnreadableException e) {
                 System.err.println("[STORE] Unable to red courier total time.");
             }
-            if(!usedCouriers.contains(sender)) {
+            if(usedCouriers.get(sender) == null) {
                 CourierTuple tuple = new CourierTuple(totalDist,1);
                 usedCouriers.put(sender, tuple);
             }
