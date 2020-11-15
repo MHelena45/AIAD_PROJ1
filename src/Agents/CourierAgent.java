@@ -1,12 +1,15 @@
-package AgentFiles;
+package Agents;
 
+import AuxiliaryClasses.AlgorithmUsed;
+import AuxiliaryClasses.Evaluators.IEvaluator;
+import AuxiliaryClasses.Evaluators.IncrementDistanceEvaluator;
+import AuxiliaryClasses.Evaluators.MinimumCouriersEvaluator;
+import AuxiliaryClasses.Evaluators.TotalDistanceEvaluator;
+import AuxiliaryClasses.Location;
+import AuxiliaryClasses.Product;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
-import jade.domain.DFService;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
@@ -26,40 +29,52 @@ public class CourierAgent extends Agent implements Serializable {
     private int maxCapacity;
     private Location storeLocation; //start and end of the trajectory
     private AID storeAID;
+    private IEvaluator evaluator;
 
-    private List<Product> listOfDeliveries;
-    private int usedCapacity = 0;
+    public List<Product> listOfDeliveries;
+    public int usedCapacity = 0;
 
     public void setup() {
         Object[] args = getArguments();
         maxWorkHoursPerDay = (int) args[0];
         storeLocation = (Location) args[1];
-        maxCapacity = (int) args[2];
-        algorithm = (AlgorithmUsed) args[3];
+        storeAID = (AID) args[2];
+        maxCapacity = (int) args[3];
+        algorithm = (AlgorithmUsed) args[4];
+        switch(algorithm) {
+            case MinimizeDistance:
+                evaluator = new IncrementDistanceEvaluator();
+                break;
+            case MinimizeTimeToDelivery:
+                evaluator = new TotalDistanceEvaluator();
+                break;
+            case MinimizeCars:
+                evaluator = new MinimumCouriersEvaluator();
+                break;
+        }
 
         System.out.println("[" + this.getLocalName() + "] Courier created, with capacity " + maxCapacity + ".");
 
         listOfDeliveries = new ArrayList<>();
 
-        DFAgentDescription df = new DFAgentDescription();
-        ServiceDescription sd  = new ServiceDescription();
-        sd.setType( "store" );
-        df.addServices(sd);
-        DFAgentDescription[] result;
-        try {
-            result = DFService.search(this, df);
-            if(result.length < 1) {
-                System.err.println("[" + getLocalName() + "] Couldn't find store agent in Yellow Pages");
-                return;
-            }
-        } catch (FIPAException e) {
-            System.err.println("[" + getLocalName() + "] Couldn't find store agent in Yellow Pages");
-            return;
-        }
-
-        storeAID = result[0].getName();
-        addBehaviour(new CourierCheckIn(getAID())); //Check in to the store
+        addBehaviour(new CourierCheckIn(this.getAID())); //Check in to the store
         addBehaviour(new FIPAContractNetResp(this, MessageTemplate.MatchPerformative(ACLMessage.CFP)));
+    }
+
+    public int getMaxCapacity() {
+        return this.maxCapacity;
+    }
+
+    public float getVelocity() {
+        return this.velocity;
+    }
+
+    public Location getStoreLocation() {
+        return storeLocation;
+    }
+
+    public float getMaxWorkHoursPerDay() {
+        return maxWorkHoursPerDay;
     }
 
     /**
@@ -67,13 +82,13 @@ public class CourierAgent extends Agent implements Serializable {
      * @param product product being
      * @param listOfDeliveries list where product should be added (usually class attribute)
      */
-    private void addDelivery(Product product, List<Product> listOfDeliveries) {
+    public void addDelivery(Product product, List<Product> listOfDeliveries) {
         int finalPosition = 0;
         float distance = -1;
         for (int i = 0; i < listOfDeliveries.size(); i++) {
             List<Product> productsCopy = new ArrayList<>(listOfDeliveries);
             productsCopy.add(i, product);
-            float tmpDistance = calculateTotalTime(productsCopy);
+            float tmpDistance = Location.calculateTotalTime(storeLocation, this, productsCopy);
 
             //check if it was instantiated or current value is smaller
             if (distance == -1 || distance > tmpDistance) {
@@ -85,72 +100,6 @@ public class CourierAgent extends Agent implements Serializable {
         listOfDeliveries.add(finalPosition, product);
 
         if(listOfDeliveries.equals(this.listOfDeliveries)) this.usedCapacity += product.getVolume(); //only if we're adding to the class list
-    }
-
-    /**
-     * checks if the courier can accept the package
-     * @param newProduct product being propose
-     * @return -1 if the courier can't delivery and the time added with that delivery otherwise
-     */
-    private float getDeliveryTime(Product newProduct) {
-        //check if there is still capacity
-        if(usedCapacity + newProduct.getVolume() > maxCapacity) return -1;
-
-        List<Product> productsCopy = new ArrayList<>(listOfDeliveries);
-        addDelivery(newProduct, productsCopy);
-        float totalTime = calculateTotalTime(productsCopy);
-
-        if(totalTime > maxWorkHoursPerDay) {
-            return -1;
-        }
-        else {
-            float result = 0f;
-            if(algorithm == AlgorithmUsed.MinimizeDistance) {
-                if(productsCopy.size() == 1) totalTime /= 2; //This makes it easier to use several cars. Thus minimizing the distance
-                float initialTime = calculateTotalTime(listOfDeliveries);
-                result = totalTime - initialTime;
-            } else if( algorithm == AlgorithmUsed.MinimizeTimeToDelivery){
-                result = totalTime;
-            } else if(algorithm == AlgorithmUsed.MinimizeCars){
-                float initialTime = calculateTotalTime(listOfDeliveries);
-
-                if(listOfDeliveries.size() == 0) {
-                    result = maxWorkHoursPerDay + 1;
-                } else {
-                    result = totalTime - initialTime;
-                }
-            }
-
-            BigDecimal bigDecimal = new BigDecimal(result).setScale(2, RoundingMode.HALF_UP);
-            return bigDecimal.floatValue();
-        }
-    }
-
-    /**
-     * calculates the need time to delivery all packages assign
-     * @return time in hours
-     * @param listOfDeliveries list of products to deliver (usually the class attribute)
-     */
-    private float calculateTotalTime(List<Product> listOfDeliveries) {
-        float distance = 0;
-
-        if(listOfDeliveries.size() == 0) {
-            return 0;
-
-        } else if(listOfDeliveries.size() == 1) {
-            //path is delivery and came back
-            distance = 2 * Location.manhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation());
-        } else {
-            distance += Location.manhattanDistance(storeLocation, listOfDeliveries.get(0).getDeliveryLocation());
-
-            for (int j = 0; j < listOfDeliveries.size() - 1; j++) {
-                distance += Location.manhattanDistance(listOfDeliveries.get(j).getDeliveryLocation(), listOfDeliveries.get(j + 1).getDeliveryLocation());
-            }
-
-            distance += Location.manhattanDistance(listOfDeliveries.get(listOfDeliveries.size() - 1).getDeliveryLocation(), storeLocation);
-        }
-
-        return distance/velocity;
     }
 
     class CourierCheckIn extends Behaviour {
@@ -170,13 +119,13 @@ public class CourierAgent extends Agent implements Serializable {
             } catch (IOException e) {
                 e.printStackTrace();
                 System.err.println("[" + courierAID.getLocalName() + "] Couldn't send check-In message with Courier: " + this);
-                checkedIn = true; //Change this
+                checkedIn = true;
                 return;
             }
             msg.addReceiver(storeAID);
             send(msg);
 
-            checkedIn = true; //TODO Change this to true only when we receive a response
+            checkedIn = true;
         }
 
         @Override
@@ -202,7 +151,7 @@ public class CourierAgent extends Agent implements Serializable {
                 return reply;
             }
 
-            float timeTillDelivery = getDeliveryTime(product);
+            float timeTillDelivery = evaluator.evaluate((CourierAgent) this.getAgent(), product);
             if(timeTillDelivery == -1) {
                 System.out.println("[" + this.getAgent().getLocalName() + "] Cannot fulfill request.");
                 reply.setPerformative(ACLMessage.REFUSE);
@@ -235,7 +184,7 @@ public class CourierAgent extends Agent implements Serializable {
 
             ACLMessage result = accept.createReply();
             result.setPerformative(ACLMessage.INFORM);
-            float totalTime = calculateTotalTime(listOfDeliveries);
+            float totalTime = Location.calculateTotalTime(storeLocation, (CourierAgent) this.getAgent(), listOfDeliveries);
             try {
                 result.setContentObject(totalTime * velocity); //Confirm delivery with current total distance
             } catch (IOException e) {
