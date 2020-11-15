@@ -58,7 +58,7 @@ public class JadeInit {
 
         //Add agents
         AgentController storeController;
-        String storeName = "Dina's store";
+        String storeName = "Store";
         List<Product> storeProducts = createProducts(numPackages);
         Object storeArgs[] = new Object[2];
         storeArgs[0] = storeProducts;
@@ -73,8 +73,8 @@ public class JadeInit {
         }
         System.out.println("[Main] Store Agent created...");
 
-        AID storeAID = new AID(storeName, AID.ISLOCALNAME);
-        List<AgentController> courierControllers = createCouriers(numCouriers, mainContainer, storeAID, Integer.parseInt(args[2]));
+
+        List<AgentController> courierControllers = createCouriers(numCouriers, mainContainer, Integer.parseInt(args[2]));
         System.out.println("[Main] Courier Agents created...");
 
         try {
@@ -97,18 +97,17 @@ public class JadeInit {
         return products;
     }
 
-    private static List<AgentController> createCouriers(int numCouriers, AgentContainer mainContainer, AID storeAID, int algorithm) {
+    private static List<AgentController> createCouriers(int numCouriers, AgentContainer mainContainer, int algorithm) {
         List<AgentController> courierControllers = new ArrayList<>();
         for(int i = 1; i <= numCouriers; i++) {
             int hours = new Random().nextInt(2) + 8;
             Object[] args = new Object[5];
             args[0] = hours;
             args[1] = storeLocation;
-            args[2] = storeAID;
-            args[4] = AlgorithmUsed.values()[algorithm];
+            args[3] = AlgorithmUsed.values()[algorithm];
 
             List<Integer> possibleCapacities = Arrays.asList(9, 12, 15);
-            args[3] = 15;//possibleCapacities.get(generator.nextInt(3));;
+            args[2] = 15;//possibleCapacities.get(generator.nextInt(3));;
 
             try {
                 AgentController courierController = mainContainer.createNewAgent("Courier"+i,"AgentFiles.CourierAgent", args);

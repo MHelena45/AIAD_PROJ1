@@ -4,6 +4,10 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.TickerBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
@@ -55,6 +59,19 @@ public class StoreAgent extends Agent {
         this.couriers = new ArrayList<>();
         this.totalPackageNumber = listOfOrders.size();
         addBehaviour(new CheckInResponder());
+
+        DFAgentDescription df = new DFAgentDescription();
+        df.setName(getAID());
+        ServiceDescription sd  = new ServiceDescription();
+        sd.setType( "store" );
+        sd.setName( getLocalName() );
+        df.addServices(sd);
+        try {
+            DFService.register(this, df);
+        } catch (FIPAException e) {
+            System.err.println("[STORE] Couldn't register in DFAgent");
+            return;
+        }
         System.out.println("[STORE] Setup complete");
     }
 
