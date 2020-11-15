@@ -10,6 +10,10 @@ import AuxiliaryClasses.Product;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
@@ -38,9 +42,8 @@ public class CourierAgent extends Agent implements Serializable {
         Object[] args = getArguments();
         maxWorkHoursPerDay = (int) args[0];
         storeLocation = (Location) args[1];
-        storeAID = (AID) args[2];
-        maxCapacity = (int) args[3];
-        algorithm = (AlgorithmUsed) args[4];
+        maxCapacity = (int) args[2];
+        algorithm = (AlgorithmUsed) args[3];
         switch(algorithm) {
             case MinimizeDistance:
                 evaluator = new IncrementDistanceEvaluator();
@@ -56,6 +59,24 @@ public class CourierAgent extends Agent implements Serializable {
         System.out.println("[" + this.getLocalName() + "] Courier created, with capacity " + maxCapacity + ".");
 
         listOfDeliveries = new ArrayList<>();
+
+        DFAgentDescription df = new DFAgentDescription();
+        ServiceDescription sd  = new ServiceDescription();
+        sd.setType( "store" );
+        df.addServices(sd);
+        DFAgentDescription[] result;
+        try {
+            result = DFService.search(this, df);
+            if(result.length < 1) {
+                System.err.println("[" + getLocalName() + "] Couldn't find store agent in Yellow Pages");
+                return;
+            }
+        } catch (FIPAException e) {
+            System.err.println("[" + getLocalName() + "] Couldn't find store agent in Yellow Pages");
+            return;
+        }
+
+        storeAID = result[0].getName();
 
         addBehaviour(new CourierCheckIn(this.getAID())); //Check in to the store
         addBehaviour(new FIPAContractNetResp(this, MessageTemplate.MatchPerformative(ACLMessage.CFP)));
