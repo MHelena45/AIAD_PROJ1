@@ -107,9 +107,8 @@ public class JadeInit {
             args[2] = storeAID;
             args[4] = AlgorithmUsed.values()[algorithm];
 
-            generator.nextInt(3);
             List<Integer> possibleCapacities = Arrays.asList(9, 12, 15);
-            args[3] = possibleCapacities.get(generator.nextInt(3));;
+            args[3] = 15;//possibleCapacities.get(generator.nextInt(3));;
 
             try {
                 AgentController courierController = mainContainer.createNewAgent("Courier"+i,"AgentFiles.CourierAgent", args);
