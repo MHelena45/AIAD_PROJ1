@@ -1,4 +1,4 @@
-package AgentFiles;
+package AuxiliaryClasses;
 
 public enum AlgorithmUsed {
     MinimizeDistance,

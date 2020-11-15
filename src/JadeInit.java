@@ -1,6 +1,6 @@
-import AgentFiles.AlgorithmUsed;
-import AgentFiles.Location;
-import AgentFiles.Product;
+import AuxiliaryClasses.AlgorithmUsed;
+import AuxiliaryClasses.Location;
+import AuxiliaryClasses.Product;
 import jade.core.AID;
 import jade.core.ProfileImpl;
 import jade.wrapper.AgentContainer;
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Random;
 
 public class JadeInit {
-    private static Random generator = new Random(1234);
+    private static Random generator = new Random(123456);
     private static final Location storeLocation = new Location(0,0);
     public static void main(String[] args) {
         if(args.length != 3) {
@@ -64,7 +64,7 @@ public class JadeInit {
         storeArgs[0] = storeProducts;
         storeArgs[1] = numCouriers;
         try {
-            storeController = mainContainer.createNewAgent(storeName, "AgentFiles.StoreAgent", storeArgs);
+            storeController = mainContainer.createNewAgent(storeName, "Agents.StoreAgent", storeArgs);
             storeController.start();
         } catch (StaleProxyException e) {
             System.err.println("\nThere was an error creating the agent!");
@@ -111,7 +111,7 @@ public class JadeInit {
             args[3] = 15;//possibleCapacities.get(generator.nextInt(3));;
 
             try {
-                AgentController courierController = mainContainer.createNewAgent("Courier"+i,"AgentFiles.CourierAgent", args);
+                AgentController courierController = mainContainer.createNewAgent("Courier"+i,"Agents.CourierAgent", args);
                 courierControllers.add(courierController);
                 courierController.start();
             } catch (StaleProxyException e) {

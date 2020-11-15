@@ -1,4 +1,6 @@
-package AgentFiles;
+package AuxiliaryClasses;
+
+import AuxiliaryClasses.Location;
 
 import java.io.Serializable;
 
