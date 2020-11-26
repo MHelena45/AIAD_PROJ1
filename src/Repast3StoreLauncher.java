@@ -1,45 +1,71 @@
 import AuxiliaryClasses.AlgorithmUsed;
 import AuxiliaryClasses.Location;
 import AuxiliaryClasses.Product;
+
 import jade.core.AID;
 import jade.core.ProfileImpl;
 import jade.wrapper.AgentContainer;
 import jade.core.Profile;
-import jade.core.Runtime;
-import jade.wrapper.AgentController;
+import sajas.core.Runtime;
+import sajas.wrapper.AgentController;
+//import jade.wrapper.AgentController;
 import jade.wrapper.ControllerException;
 import jade.wrapper.StaleProxyException;
+import sajas.sim.repast3.Repast3Launcher;
+import sajas.wrapper.ContainerController;
+import uchicago.src.sim.engine.SimInit;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-public class JadeInit {
+class Repast3StoreLauncher  extends Repast3Launcher {
     private static Random generator = new Random(123456);
     private static final Location storeLocation = new Location(0,0);
+    private static int numCouriers;
+    private static int numPackages;
+    private static int algorithm;
+
+    @Override
+    public String[] getInitParam() {
+        return new String[0];
+    }
+
+    @Override
+    public String getName() {
+        return "Store -- SAJaS Repast3";
+    }
+
+    /**
+     * Launching Repast3
+     * @param args
+     */
     public static void main(String[] args) {
-        if(args.length != 3) {
+        if (args.length != 3) {
             System.err.println("Wrong usage: java JadeInit <num_couriers> <num_packages> <algorithm(0/1/2)>");
             return;
         }
 
-        int numCouriers, numPackages, algorithm;
+        SimInit init = new SimInit();
+        init.setNumRuns(1);   // works only in batch mode
+        init.loadModel(new Repast3StoreLauncher(), null, true);
+
         try {
             numCouriers = Integer.parseInt(args[0]);
             numPackages = Integer.parseInt(args[1]);
             algorithm = Integer.parseInt(args[2]);
-            if(numCouriers <= 0) {
+            if (numCouriers <= 0) {
                 System.err.println("Must have 1 or more couriers");
                 return;
             }
 
-            if(numPackages <= 0) {
+            if (numPackages <= 0) {
                 System.err.println("Must have 1 or more packages");
                 return;
             }
 
-            if(algorithm < 0 || algorithm > 2) {
+            if (algorithm < 0 || algorithm > 2) {
                 System.err.println("Invalid Algorithm, choose from 0, 1 or 2");
                 return;
             }
@@ -47,6 +73,10 @@ public class JadeInit {
             System.err.println("Arguments provided are not valid, aborting...");
             return;
         }
+    }
+
+    @Override
+    protected void launchJADE() {
 
         //Start JADE
         Runtime runt = Runtime.instance();
@@ -63,8 +93,9 @@ public class JadeInit {
         Object storeArgs[] = new Object[2];
         storeArgs[0] = storeProducts;
         storeArgs[1] = numCouriers;
+
         try {
-            storeController = mainContainer.createNewAgent(storeName, "Agents.StoreAgent", storeArgs);
+            storeController = (AgentController) mainContainer.createNewAgent(storeName, "Agents.StoreAgent", storeArgs);
             storeController.start();
         } catch (StaleProxyException e) {
             System.err.println("\nThere was an error creating the agent!");
@@ -74,7 +105,7 @@ public class JadeInit {
         System.out.println("[Main] Store Agent created...");
 
 
-        List<AgentController> courierControllers = createCouriers(numCouriers, mainContainer, Integer.parseInt(args[2]));
+        List<AgentController> courierControllers = createCouriers(numCouriers, mainContainer, algorithm);
         System.out.println("[Main] Courier Agents created...");
 
         try {
@@ -110,7 +141,7 @@ public class JadeInit {
             args[2] = 15;//possibleCapacities.get(generator.nextInt(3));;
 
             try {
-                AgentController courierController = mainContainer.createNewAgent("Courier"+i,"Agents.CourierAgent", args);
+                AgentController courierController = (AgentController) mainContainer.createNewAgent("Courier"+i,"Agents.CourierAgent", args);
                 courierControllers.add(courierController);
                 courierController.start();
             } catch (StaleProxyException e) {
@@ -120,4 +151,5 @@ public class JadeInit {
 
         return courierControllers;
     }
+
 }

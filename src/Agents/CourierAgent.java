@@ -8,16 +8,16 @@ import AuxiliaryClasses.Evaluators.TotalDistanceEvaluator;
 import AuxiliaryClasses.Location;
 import AuxiliaryClasses.Product;
 import jade.core.AID;
-import jade.core.Agent;
-import jade.core.behaviours.Behaviour;
-import jade.domain.DFService;
+import sajas.core.Agent;
+import sajas.core.behaviours.Behaviour;
+import sajas.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
-import jade.proto.ContractNetResponder;
+import sajas.proto.ContractNetResponder;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -38,6 +38,7 @@ public class CourierAgent extends Agent implements Serializable {
     public List<Product> listOfDeliveries;
     public int usedCapacity = 0;
 
+    @Override
     public void setup() {
         Object[] args = getArguments();
         maxWorkHoursPerDay = (int) args[0];
@@ -160,6 +161,7 @@ public class CourierAgent extends Agent implements Serializable {
             super(a, mt);
         }
 
+        @Override
         protected ACLMessage handleCfp(ACLMessage cfp) {
             Product product;
             ACLMessage reply = cfp.createReply();
