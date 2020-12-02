@@ -25,6 +25,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class CourierAgent extends Agent implements Serializable {
     private final int velocity = 40; //velocity Km/h
@@ -61,25 +62,7 @@ public class CourierAgent extends Agent implements Serializable {
 
         listOfDeliveries = new ArrayList<>();
 
-        DFAgentDescription df = new DFAgentDescription();
-        ServiceDescription sd  = new ServiceDescription();
-        sd.setType( "store" );
-        df.addServices(sd);
-        DFAgentDescription[] result;
-        try {
-            result = DFService.search(this, df);
-            if(result.length < 1) {
-                System.err.println("[" + getLocalName() + "] Couldn't find store agent in Yellow Pages");
-                return;
-            }
-        } catch (FIPAException e) {
-            System.err.println("[" + getLocalName() + "] Couldn't find store agent in Yellow Pages");
-            return;
-        }
-
-        storeAID = result[0].getName();
-
-        addBehaviour(new CourierCheckIn(this.getAID())); //Check in to the store
+        addBehaviour(new CourierCheckIn(this.getAID(), this)); //Check in to the store
         addBehaviour(new FIPAContractNetResp(this, MessageTemplate.MatchPerformative(ACLMessage.CFP)));
     }
 
@@ -127,13 +110,47 @@ public class CourierAgent extends Agent implements Serializable {
     class CourierCheckIn extends Behaviour {
         boolean checkedIn = false;
         private AID courierAID;
+        private Agent thisAgent;
 
-        CourierCheckIn(AID courierAID) {
+        CourierCheckIn(AID courierAID, Agent thisAgent) {
             this.courierAID = courierAID;
+            this.thisAgent = thisAgent;
         }
 
         @Override
         public void action() {
+            DFAgentDescription df = new DFAgentDescription();
+            ServiceDescription sd  = new ServiceDescription();
+            sd.setType( "store" );
+            df.addServices(sd);
+            DFAgentDescription[] result = null;
+            boolean foundStore = false;
+            final int maxTries = 10;
+            int currTries = 0;
+            while(!foundStore) {
+                try {
+                    result = DFService.search(thisAgent, df);
+                    if(result.length < 1) {
+                        System.out.println("[" + getLocalName() + "] Couldn't find store agent in Yellow Pages");
+                        currTries++;
+                        Thread.sleep(100);
+                    } else foundStore = true;
+
+                    if(currTries == maxTries) {
+                        System.err.println("[" + getLocalName() + "] Exceeded Max Tries in Store Check-In. Terminating Agent");
+                        return;
+                    }
+                } catch (FIPAException e) {
+                    System.err.println("[" + getLocalName() + "] Error trying to find store agent in Yellow Pages");
+                    return;
+                } catch (InterruptedException e) {
+                    System.err.println("[" + getLocalName() + "] Couldn't Sleep");
+                    return;
+                }
+            }
+
+            storeAID = result[0].getName();
+
             ACLMessage msg = new ACLMessage(ACLMessage.SUBSCRIBE);
             try {
                 System.out.println("[" + courierAID.getLocalName() + "] Checking in...");

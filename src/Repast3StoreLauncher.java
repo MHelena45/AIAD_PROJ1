@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 class Repast3StoreLauncher  extends Repast3Launcher {
     private static Random generator = new Random(123456);
@@ -73,7 +74,7 @@ class Repast3StoreLauncher  extends Repast3Launcher {
 
         SimInit init = new SimInit();
         init.setNumRuns(1);   // works only in batch mode
-        init.loadModel(new Repast3StoreLauncher(), null, true);
+        init.loadModel(new Repast3StoreLauncher(), null, false);
     }
 
     @Override
@@ -105,18 +106,8 @@ class Repast3StoreLauncher  extends Repast3Launcher {
         }
         System.out.println("[Main] Store Agent created...");
 
-
         List<AgentController> courierControllers = createCouriers(numCouriers, mainContainer, algorithm);
         System.out.println("[Main] Courier Agents created...");
-
-        /*
-        try {
-            mainContainer.start();
-        } catch (ControllerException e) {
-            System.err.println("\nThere was an error with the main Container!");
-            e.printStackTrace();
-        }
-        */
 
         System.out.println("[Main] Container Running....");
         return;
