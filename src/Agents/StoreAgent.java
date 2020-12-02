@@ -53,11 +53,13 @@ public class StoreAgent extends Agent {
         }
     }
 
-    @Override
-    public void setup() {
-        Object[] args = getArguments();
-        this.listOfOrders = (List<Product>) args[0];
-        this.expectedNumberOfCouriers = (int) args[1];
+    public StoreAgent(List<Product> listOfOrders, int minNumCouriers) {
+        this.listOfOrders = listOfOrders;
+        this.expectedNumberOfCouriers = minNumCouriers;
+        setupAgent();
+    }
+
+    private void setupAgent() {
         this.couriers = new ArrayList<>();
         this.totalPackageNumber = listOfOrders.size();
         addBehaviour(new CheckInResponder());
@@ -75,6 +77,16 @@ public class StoreAgent extends Agent {
             return;
         }
         System.out.println("[STORE] Setup complete");
+    }
+
+    @Override
+    public void setup() {
+        Object[] args = getArguments();
+        if(args != null) {
+            this.listOfOrders = (List<Product>) args[0];
+            this.expectedNumberOfCouriers = (int) args[1];
+        }
+        setupAgent();
     }
 
     private void addCourier(AID courierAgent) {
@@ -101,6 +113,20 @@ public class StoreAgent extends Agent {
 
         BigDecimal bigDecimal = new BigDecimal(avgTime).setScale(2, RoundingMode.HALF_UP);
         System.out.println("\t- Average Time To Deliver 1 Package: " + bigDecimal.floatValue() + " h");
+    }
+
+    public float getTotalSystemDistance() {
+        float totalDist = 0f;
+        Set<AID> keys = usedCouriers.keySet();
+        Iterator<AID> itr = keys.iterator();
+        AID key;
+        while (itr.hasNext()) {
+            key = itr.next();
+            totalDist += usedCouriers.get(key).getDistance();
+            float time = usedCouriers.get(key).getDistance() / 40; //40 because velocity is 40km/h
+        }
+
+        return totalDist;
     }
 
     private void sendDeliveryRequest(Product product) { //Call this when we want to send a delivery request to our Couriers

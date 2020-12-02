@@ -1,4 +1,5 @@
 import Agents.CourierAgent;
+import Agents.StoreAgent;
 import AuxiliaryClasses.AlgorithmUsed;
 import AuxiliaryClasses.Location;
 import AuxiliaryClasses.Product;
@@ -14,7 +15,12 @@ import jade.wrapper.ControllerException;
 import jade.wrapper.StaleProxyException;
 import sajas.sim.repast3.Repast3Launcher;
 import sajas.wrapper.ContainerController;
+import uchicago.src.sim.analysis.OpenSequenceGraph;
+import uchicago.src.sim.analysis.Sequence;
+import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
+import uchicago.src.sim.gui.DisplaySurface;
+import uchicago.src.sim.gui.Network2DDisplay;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +34,7 @@ class Repast3StoreLauncher  extends Repast3Launcher {
     private static int numCouriers;
     private static int numPackages;
     private static int algorithm;
+    private static StoreAgent storeAgent;
 
     @Override
     public String[] getInitParam() {
@@ -92,12 +99,17 @@ class Repast3StoreLauncher  extends Repast3Launcher {
         AgentController storeController;
         String storeName = "Store";
         List<Product> storeProducts = createProducts(numPackages);
+        storeAgent = new StoreAgent(storeProducts, numCouriers);
+
+        /*
         Object storeArgs[] = new Object[2];
         storeArgs[0] = storeProducts;
         storeArgs[1] = numCouriers;
+        */
 
         try {
-            storeController = mainContainer.createNewAgent(storeName, "Agents.StoreAgent", storeArgs);
+            // storeController = mainContainer.createNewAgent(storeName, "Agents.StoreAgent", storeArgs);
+            storeController = mainContainer.acceptNewAgent(storeName,storeAgent);
             storeController.start();
         } catch (StaleProxyException e) {
             System.err.println("\nThere was an error creating the agent!");
@@ -145,6 +157,43 @@ class Repast3StoreLauncher  extends Repast3Launcher {
         }
 
         return courierControllers;
+    }
+
+    // create graphs
+    @Override
+    public void begin() {
+        super.begin();
+        buildAndScheduleDisplay();
+    }
+
+    private DisplaySurface dsurf;
+    private int WIDTH = 200, HEIGHT = 200;
+    private OpenSequenceGraph plot;
+
+    private void buildAndScheduleDisplay() {
+        if (dsurf != null) dsurf.dispose();
+        dsurf = new DisplaySurface(this, "Total Distance Display");
+        registerDisplaySurface("Total Distance Display", dsurf);
+
+        // THISI IS FOR THE VISUAL EXECUTIOON GRAPH (ATÉ ERA GIRO TERMOS)
+        /*
+        Network2DDisplay display = new Network2DDisplay(nodes,WIDTH,HEIGHT);
+        dsurf.addDisplayableProbeable(display, "Network Display");
+        dsurf.addZoomable(display);
+        addSimEventListener(dsurf);
+        dsurf.display();
+        */
+
+        // TOTAL DISTANCE GRAPH
+        if (plot != null) plot.dispose();
+        plot = new OpenSequenceGraph("Total Distance", this);
+        plot.setAxisTitles("time", "Total km");
+
+        plot.addSequence("Courier Distance", () -> storeAgent.getTotalSystemDistance());
+        plot.display();
+
+        // getSchedule().scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
+        getSchedule().scheduleActionAtInterval(100, plot, "step", Schedule.LAST);
     }
 
 }
