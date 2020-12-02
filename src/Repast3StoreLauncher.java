@@ -1,3 +1,4 @@
+import Agents.CourierAgent;
 import AuxiliaryClasses.AlgorithmUsed;
 import AuxiliaryClasses.Location;
 import AuxiliaryClasses.Product;
@@ -47,10 +48,6 @@ class Repast3StoreLauncher  extends Repast3Launcher {
             return;
         }
 
-        SimInit init = new SimInit();
-        init.setNumRuns(1);   // works only in batch mode
-        init.loadModel(new Repast3StoreLauncher(), null, true);
-
         try {
             numCouriers = Integer.parseInt(args[0]);
             numPackages = Integer.parseInt(args[1]);
@@ -73,6 +70,10 @@ class Repast3StoreLauncher  extends Repast3Launcher {
             System.err.println("Arguments provided are not valid, aborting...");
             return;
         }
+
+        SimInit init = new SimInit();
+        init.setNumRuns(1);   // works only in batch mode
+        init.loadModel(new Repast3StoreLauncher(), null, true);
     }
 
     @Override
@@ -84,7 +85,7 @@ class Repast3StoreLauncher  extends Repast3Launcher {
         profile.setParameter(Profile.GUI, "true");
 
         //Create Main Container
-        AgentContainer mainContainer = runt.createMainContainer(profile);
+        ContainerController mainContainer = runt.createMainContainer(profile);
 
         //Add agents
         AgentController storeController;
@@ -95,7 +96,7 @@ class Repast3StoreLauncher  extends Repast3Launcher {
         storeArgs[1] = numCouriers;
 
         try {
-            storeController = (AgentController) mainContainer.createNewAgent(storeName, "Agents.StoreAgent", storeArgs);
+            storeController = mainContainer.createNewAgent(storeName, "Agents.StoreAgent", storeArgs);
             storeController.start();
         } catch (StaleProxyException e) {
             System.err.println("\nThere was an error creating the agent!");
@@ -108,12 +109,14 @@ class Repast3StoreLauncher  extends Repast3Launcher {
         List<AgentController> courierControllers = createCouriers(numCouriers, mainContainer, algorithm);
         System.out.println("[Main] Courier Agents created...");
 
+        /*
         try {
             mainContainer.start();
         } catch (ControllerException e) {
             System.err.println("\nThere was an error with the main Container!");
             e.printStackTrace();
         }
+        */
 
         System.out.println("[Main] Container Running....");
         return;
@@ -128,7 +131,7 @@ class Repast3StoreLauncher  extends Repast3Launcher {
         return products;
     }
 
-    private static List<AgentController> createCouriers(int numCouriers, AgentContainer mainContainer, int algorithm) {
+    private static List<AgentController> createCouriers(int numCouriers, ContainerController mainContainer, int algorithm) {
         List<AgentController> courierControllers = new ArrayList<>();
         for(int i = 1; i <= numCouriers; i++) {
             int hours = new Random().nextInt(2) + 8;
@@ -141,7 +144,8 @@ class Repast3StoreLauncher  extends Repast3Launcher {
             args[2] = 15;//possibleCapacities.get(generator.nextInt(3));;
 
             try {
-                AgentController courierController = (AgentController) mainContainer.createNewAgent("Courier"+i,"Agents.CourierAgent", args);
+                AgentController courierController = mainContainer.createNewAgent("Courier"+i,"Agents.CourierAgent", args);
+                courierController.start();
                 courierControllers.add(courierController);
                 courierController.start();
             } catch (StaleProxyException e) {
