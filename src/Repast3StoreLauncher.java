@@ -166,17 +166,15 @@ class Repast3StoreLauncher  extends Repast3Launcher {
         buildAndScheduleDisplay();
     }
 
-    private DisplaySurface dsurf;
-    private int WIDTH = 200, HEIGHT = 200;
-    private OpenSequenceGraph plot;
-
     private void buildAndScheduleDisplay() {
+        /*
+        // THISI IS FOR THE VISUAL EXECUTIOON GRAPH (ATÉ ERA GIRO TERMOS)
+
+        int WIDTH = 200, HEIGHT = 200;
+        DisplaySurface dsurf = null;
         if (dsurf != null) dsurf.dispose();
         dsurf = new DisplaySurface(this, "Total Distance Display");
         registerDisplaySurface("Total Distance Display", dsurf);
-
-        // THISI IS FOR THE VISUAL EXECUTIOON GRAPH (ATÉ ERA GIRO TERMOS)
-        /*
         Network2DDisplay display = new Network2DDisplay(nodes,WIDTH,HEIGHT);
         dsurf.addDisplayableProbeable(display, "Network Display");
         dsurf.addZoomable(display);
@@ -184,16 +182,27 @@ class Repast3StoreLauncher  extends Repast3Launcher {
         dsurf.display();
         */
 
-        // TOTAL DISTANCE GRAPH
-        if (plot != null) plot.dispose();
-        plot = new OpenSequenceGraph("Total Distance", this);
-        plot.setAxisTitles("time", "Total km");
+        // total Distance Graph
+        OpenSequenceGraph totalDistPlot = null;
+        if (totalDistPlot != null) totalDistPlot.dispose();
+        totalDistPlot = new OpenSequenceGraph("Total Distance", this);
+        totalDistPlot.setAxisTitles("time", "Total km");
 
-        plot.addSequence("Courier Distance", () -> storeAgent.getTotalSystemDistance());
-        plot.display();
+        totalDistPlot.addSequence("Courier Distance", () -> storeAgent.getTotalSystemDistance());
+        totalDistPlot.display();
+
+        // Time to deliver package Graph
+        OpenSequenceGraph timePerPackagePlot = null;
+        if (timePerPackagePlot != null) timePerPackagePlot.dispose();
+        timePerPackagePlot = new OpenSequenceGraph("Time Per package", this);
+        timePerPackagePlot.setAxisTitles("time", "Avg");
+
+        timePerPackagePlot.addSequence("Package Time", () -> storeAgent.getPackageAvgTime());
+        timePerPackagePlot.display();
 
         // getSchedule().scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
-        getSchedule().scheduleActionAtInterval(100, plot, "step", Schedule.LAST);
+        getSchedule().scheduleActionAtInterval(100, totalDistPlot, "step", Schedule.LAST);
+        getSchedule().scheduleActionAtInterval(100, timePerPackagePlot, "step", Schedule.LAST);
     }
 
 }

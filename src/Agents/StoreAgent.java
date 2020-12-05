@@ -129,6 +129,21 @@ public class StoreAgent extends Agent {
         return totalDist;
     }
 
+    public float getPackageAvgTime() {
+        float avgTime = 0;
+        Set<AID> keys = usedCouriers.keySet();
+        Iterator<AID> itr = keys.iterator();
+        AID key;
+        while (itr.hasNext()) {
+            key = itr.next();
+            float time = usedCouriers.get(key).getDistance() / 40; //40 because velocity is 40km/h
+            avgTime += time / usedCouriers.get(key).getNumPackages();
+        }
+
+        avgTime /= usedCouriers.size();
+        return avgTime;
+    }
+
     private void sendDeliveryRequest(Product product) { //Call this when we want to send a delivery request to our Couriers
         ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
         try {
