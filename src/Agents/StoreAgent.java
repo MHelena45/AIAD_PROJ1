@@ -159,6 +159,7 @@ public class StoreAgent extends Agent {
             return;
         }
 
+        graphicsDisplay.setGreen("Product" + product.getId());
         addBehaviour(new FIPAContractNetInit(this, cfp, couriers));
     }
 

@@ -39,6 +39,7 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     private static int numPackages;
     private static int algorithm;
     private static StoreAgent storeAgent;
+    private int cityXSize = , cityYSize;
 
     @Override
     public String[] getInitParam() {
@@ -237,8 +238,18 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
         getSchedule().scheduleActionAtInterval(100, timePerPackagePlot, "step", Schedule.LAST);
     }
 
+    private DefaultDrawableNode getNode(String label) {
+        for(DefaultDrawableNode node : nodes) {
+            if(node.getNodeLabel().equals(label)) {
+                return node;
+            }
+        }
+        return null;
+    }
+
     @Override
     public void setGreen(String nodeName) {
-
+        DefaultDrawableNode node = getNode(nodeName);
+        if(node != null) node.setColor(Color.GREEN);
     }
 }
