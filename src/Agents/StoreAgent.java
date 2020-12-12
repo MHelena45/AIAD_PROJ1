@@ -25,10 +25,15 @@ public class StoreAgent extends Agent {
     private List<Product> listOfOrders;
     private List<AID> couriers;
     private int expectedNumberOfCouriers;
+    private GraphicsDisplay graphicsDisplay;
     private volatile boolean busy = false;
     private int totalPackageNumber;
     private int rejectedPackagesNumber;
     private Hashtable<AID, CourierTuple> usedCouriers = new Hashtable<>();
+
+    public Location getStoreLocation() {
+        return storeLocation;
+    }
 
     private class CourierTuple {
         private float distance;
@@ -53,9 +58,10 @@ public class StoreAgent extends Agent {
         }
     }
 
-    public StoreAgent(List<Product> listOfOrders, int minNumCouriers) {
+    public StoreAgent(List<Product> listOfOrders, int minNumCouriers, GraphicsDisplay graphicsDisplay) {
         this.listOfOrders = listOfOrders;
         this.expectedNumberOfCouriers = minNumCouriers;
+        this.graphicsDisplay = graphicsDisplay;
         setupAgent();
     }
 
@@ -293,7 +299,7 @@ public class StoreAgent extends Agent {
             try {
                 totalDist = (float) ((ACLMessage)resultNotifications.get(0)).getContentObject();
             } catch (UnreadableException e) {
-                System.err.println("[STORE] Unable to red courier total time.");
+                System.err.println("[STORE] Unable to read courier total time.");
             }
             if(usedCouriers.get(sender) == null) {
                 CourierTuple tuple = new CourierTuple(totalDist,1);

@@ -1,4 +1,5 @@
 import Agents.CourierAgent;
+import Agents.GraphicsDisplay;
 import Agents.StoreAgent;
 import AuxiliaryClasses.AlgorithmUsed;
 import AuxiliaryClasses.Location;
@@ -21,14 +22,17 @@ import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
 import uchicago.src.sim.gui.DisplaySurface;
 import uchicago.src.sim.gui.Network2DDisplay;
+import uchicago.src.sim.gui.OvalNetworkItem;
+import uchicago.src.sim.network.DefaultDrawableNode;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-class Repast3StoreLauncher  extends Repast3Launcher {
+class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     private static Random generator = new Random(123456);
     private static final Location storeLocation = new Location(0,0);
     private static int numCouriers;
@@ -99,7 +103,8 @@ class Repast3StoreLauncher  extends Repast3Launcher {
         AgentController storeController;
         String storeName = "Store";
         List<Product> storeProducts = createProducts(numPackages);
-        storeAgent = new StoreAgent(storeProducts, numCouriers);
+        for(Product product : storeProducts) addDeliveryNode(product);
+        storeAgent = new StoreAgent(storeProducts, numCouriers, this);
 
         /*
         Object storeArgs[] = new Object[2];
@@ -166,21 +171,48 @@ class Repast3StoreLauncher  extends Repast3Launcher {
         buildAndScheduleDisplay();
     }
 
-    private void buildAndScheduleDisplay() {
-        /*
-        // THISI IS FOR THE VISUAL EXECUTIOON GRAPH (ATÉ ERA GIRO TERMOS)
+    private DefaultDrawableNode generateNode(String label, Color color, int x, int y, int size) {
+        OvalNetworkItem oval = new OvalNetworkItem(x,y);
+        oval.allowResizing(false);
+        oval.setHeight(size);
+        oval.setWidth(size);
 
-        int WIDTH = 200, HEIGHT = 200;
-        DisplaySurface dsurf = null;
-        if (dsurf != null) dsurf.dispose();
-        dsurf = new DisplaySurface(this, "Total Distance Display");
-        registerDisplaySurface("Total Distance Display", dsurf);
+        DefaultDrawableNode node = new DefaultDrawableNode(label, oval);
+        node.setColor(color);
+
+        return node;
+    }
+
+    private List<DefaultDrawableNode> nodes = new ArrayList<>();
+    private final Color[] courierColors = new Color[] {Color.BLUE, Color.YELLOW, Color.GREEN, Color.PINK, Color.ORANGE, Color.CYAN, Color.gray, Color.MAGENTA};
+    private final int WIDTH = 300, HEIGHT = 300;
+
+    private void addDeliveryNode(Product product) {
+        Location productLocation = product.getDeliveryLocation();
+        int productGraphX = productLocation.getX() + WIDTH / 2;
+        int productGraphY = productLocation.getY() + HEIGHT / 2;
+
+        DefaultDrawableNode node = generateNode("Product" + product.getId(), Color.RED, productGraphX, productGraphY, 5);
+        nodes.add(node);
+    }
+
+    private void buildAndScheduleDisplay() {
+        Location storeLocation = storeAgent.getStoreLocation();
+
+        int storeGraphX = storeLocation.getX() + WIDTH / 2;
+        int storeGraphY = storeLocation.getY() + HEIGHT / 2;
+
+        DefaultDrawableNode node = generateNode("Store", Color.WHITE, storeGraphX, storeGraphY, 10);
+        nodes.add(node);
+
+        DisplaySurface dsurf = new DisplaySurface(this, "Couriers Trajectory");
+        registerDisplaySurface("Couriers Trajectory Display", dsurf);
         Network2DDisplay display = new Network2DDisplay(nodes,WIDTH,HEIGHT);
         dsurf.addDisplayableProbeable(display, "Network Display");
         dsurf.addZoomable(display);
         addSimEventListener(dsurf);
         dsurf.display();
-        */
+
 
         // total Distance Graph
         OpenSequenceGraph totalDistPlot = null;
@@ -200,9 +232,13 @@ class Repast3StoreLauncher  extends Repast3Launcher {
         timePerPackagePlot.addSequence("Package Time", () -> storeAgent.getPackageAvgTime());
         timePerPackagePlot.display();
 
-        // getSchedule().scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
+        getSchedule().scheduleActionAtInterval(100, dsurf, "updateDisplay", Schedule.LAST);
         getSchedule().scheduleActionAtInterval(100, totalDistPlot, "step", Schedule.LAST);
         getSchedule().scheduleActionAtInterval(100, timePerPackagePlot, "step", Schedule.LAST);
     }
 
+    @Override
+    public void setGreen(String nodeName) {
+
+    }
 }
