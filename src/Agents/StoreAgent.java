@@ -299,7 +299,7 @@ public class StoreAgent extends Agent {
             System.out.println("[STORE] Agent " + ((ACLMessage)resultNotifications.get(0)).getSender().getLocalName() + " confirmed product delivery.");
             float totalDist = 0f;
             Product currentProduct = null;
-            List<Product> productList;
+            List<Product> productList = null;
             AID sender = ((ACLMessage)resultNotifications.get(0)).getSender();
             try {
                 ConfirmationResult confirmationResult = (ConfirmationResult) ((ACLMessage)resultNotifications.get(0)).getContentObject();
@@ -318,7 +318,8 @@ public class StoreAgent extends Agent {
                 tuple.addNewPackage(totalDist);
             }
 
-
+            graphicsDisplay.setGreen("Product"+currentProduct.getId());
+            graphicsDisplay.drawEdges(productList);
             busy = false;
         }
 

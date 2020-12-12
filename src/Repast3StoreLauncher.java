@@ -2,6 +2,7 @@ import Agents.CourierAgent;
 import Agents.GraphicsDisplay;
 import Agents.StoreAgent;
 import AuxiliaryClasses.AlgorithmUsed;
+import AuxiliaryClasses.Edge;
 import AuxiliaryClasses.Location;
 import AuxiliaryClasses.Product;
 
@@ -22,6 +23,7 @@ import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
 import uchicago.src.sim.gui.*;
 import uchicago.src.sim.network.DefaultDrawableNode;
+import uchicago.src.sim.network.DefaultEdge;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -132,7 +134,7 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     private static List<Product> createProducts(int numProducts) {
         List<Product> products = new ArrayList<>();
         for (int i = 1; i <= numProducts; i++) {
-            Product newProduct = new Product(i, new Location(generator.nextInt(cityXSize) - cityXSize/2, generator.nextInt(cityYSize) - cityYSize/2), generator.nextInt(3) + 1);
+            Product newProduct = new Product(i, new Location(generator.nextInt(cityXSize + 1) - cityXSize/2, generator.nextInt(cityYSize + 1) - cityYSize/2), generator.nextInt(3) + 1);
             products.add(newProduct);
         }
         return products;
@@ -185,6 +187,7 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     private List<DefaultDrawableNode> nodes = new ArrayList<>();
     private final Color[] courierColors = new Color[] {Color.BLUE, Color.YELLOW, Color.GREEN, Color.PINK, Color.ORANGE, Color.CYAN, Color.gray, Color.MAGENTA};
     private final int WIDTH = 300, HEIGHT = 300;
+    private final int MARGIN = 25;
 
     public void addDeliveryNode(Product product) {
         Location productLocation = product.getDeliveryLocation();
@@ -199,6 +202,9 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     private Location convertToGraphCoords(Location location) {
         int x = (location.getX() + cityXSize/2) * (WIDTH/cityXSize);
         int y = (location.getY() - cityYSize/2) * -(HEIGHT/cityYSize);
+
+        x += MARGIN / 2;
+        y += MARGIN / 2;
 
         return new Location(x,y);
     }
@@ -218,7 +224,7 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
 
         DisplaySurface dsurf = new DisplaySurface(this, "Couriers Trajectory");
         registerDisplaySurface("Couriers Trajectory Display", dsurf);
-        layout = new DefaultGraphLayout(nodes, WIDTH, HEIGHT);
+        layout = new DefaultGraphLayout(nodes, WIDTH + MARGIN, HEIGHT + MARGIN);
         Network2DDisplay display = new Network2DDisplay(layout);
         dsurf.addDisplayableProbeable(display, "Network Display");
         dsurf.addZoomable(display);
@@ -244,13 +250,14 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
         timePerPackagePlot.addSequence("Package Time", () -> storeAgent.getPackageAvgTime());
         timePerPackagePlot.display();
 
-        getSchedule().scheduleActionAtInterval(100, dsurf, "updateDisplay", Schedule.LAST);
+        getSchedule().scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
         getSchedule().scheduleActionAtInterval(100, totalDistPlot, "step", Schedule.LAST);
         getSchedule().scheduleActionAtInterval(100, timePerPackagePlot, "step", Schedule.LAST);
     }
 
     private DefaultDrawableNode getNode(String label) {
-        for(DefaultDrawableNode node : nodes) {
+        ArrayList<DefaultDrawableNode> nodeList = layout.getNodeList();
+        for(DefaultDrawableNode node : nodeList) {
             if(node.getNodeLabel().equals(label)) {
                 return node;
             }
@@ -262,5 +269,40 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     public void setGreen(String nodeName) {
         DefaultDrawableNode node = getNode(nodeName);
         if(node != null) node.setColor(Color.GREEN);
+    }
+
+    @Override
+    public void drawEdges(List<Product> productList) {
+        DefaultDrawableNode storeNode = getNode("Store");
+
+        for(int i = 0; i < productList.size() - 1; i++) {
+            Product product = productList.get(i);
+            Product nextProduct = productList.get(i + 1);
+            DefaultDrawableNode node = getNode("Product" + product.getId());
+            DefaultDrawableNode nextNode = getNode("Product" + nextProduct.getId());
+
+            node.clearOutEdges();
+            // node.clearInEdges();
+            Edge edge = new Edge(node, nextNode);
+            edge.setColor(Color.GREEN);
+            node.addOutEdge(edge);
+        }
+
+        Product lastProduct = productList.get(productList.size() - 1);
+        DefaultDrawableNode lastNode = getNode("Product" + lastProduct.getId());
+
+        lastNode.clearOutEdges();
+        // lastNode.clearInEdges();
+        Edge lastEdge = new Edge(lastNode, storeNode);
+        lastEdge.setColor(Color.YELLOW);
+        lastNode.addOutEdge(lastEdge);
+
+
+        Product firstProduct = productList.get(0);
+        DefaultDrawableNode firstNode = getNode("Product" + firstProduct.getId());
+
+        Edge firstEdge = new Edge(storeNode, firstNode);
+        firstEdge.setColor(Color.MAGENTA);
+        firstNode.addOutEdge(firstEdge);
     }
 }
