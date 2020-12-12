@@ -185,7 +185,7 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     }
 
     private List<DefaultDrawableNode> nodes = new ArrayList<>();
-    private final Color[] courierColors = new Color[] {Color.BLUE, Color.YELLOW, Color.MAGENTA, Color.gray, Color.CYAN, Color.ORANGE, Color.PINK};
+    private final Color[] courierColors = new Color[] {Color.BLUE, Color.YELLOW, Color.MAGENTA, Color.WHITE, Color.CYAN, Color.ORANGE, Color.gray, Color.PINK};
     private final int WIDTH = 300, HEIGHT = 300;
     private final int MARGIN = 25;
 
@@ -297,7 +297,7 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
         lastNode.clearOutEdges();
         // lastNode.clearInEdges();
         Edge lastEdge = new Edge(lastNode, storeNode);
-        lastEdge.setColor(Color.WHITE);
+        lastEdge.setColor(courierColor);
         lastNode.addOutEdge(lastEdge);
 
 
