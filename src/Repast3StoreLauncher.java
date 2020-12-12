@@ -20,9 +20,7 @@ import uchicago.src.sim.analysis.OpenSequenceGraph;
 import uchicago.src.sim.analysis.Sequence;
 import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
-import uchicago.src.sim.gui.DisplaySurface;
-import uchicago.src.sim.gui.Network2DDisplay;
-import uchicago.src.sim.gui.OvalNetworkItem;
+import uchicago.src.sim.gui.*;
 import uchicago.src.sim.network.DefaultDrawableNode;
 
 import java.awt.*;
@@ -40,6 +38,7 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     private static int algorithm;
     private static StoreAgent storeAgent;
     private static int cityXSize = 20, cityYSize = 20;
+    private GraphLayout layout;
 
     @Override
     public String[] getInitParam() {
@@ -104,7 +103,6 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
         AgentController storeController;
         String storeName = "Store";
         List<Product> storeProducts = createProducts(numPackages);
-        for(Product product : storeProducts) addDeliveryNode(product);
         storeAgent = new StoreAgent(storeProducts, numCouriers, this);
 
         /*
@@ -188,14 +186,14 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     private final Color[] courierColors = new Color[] {Color.BLUE, Color.YELLOW, Color.GREEN, Color.PINK, Color.ORANGE, Color.CYAN, Color.gray, Color.MAGENTA};
     private final int WIDTH = 300, HEIGHT = 300;
 
-    private void addDeliveryNode(Product product) {
+    public void addDeliveryNode(Product product) {
         Location productLocation = product.getDeliveryLocation();
         Location producGraphtLocation = convertToGraphCoords(productLocation);
         int productGraphX = producGraphtLocation.getX();
         int productGraphY = producGraphtLocation.getY();
 
         DefaultDrawableNode node = generateNode("Product" + product.getId(), Color.RED, productGraphX, productGraphY, 5);
-        nodes.add(node);
+        layout.appendToList(node);
     }
 
     private Location convertToGraphCoords(Location location) {
@@ -220,7 +218,8 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
 
         DisplaySurface dsurf = new DisplaySurface(this, "Couriers Trajectory");
         registerDisplaySurface("Couriers Trajectory Display", dsurf);
-        Network2DDisplay display = new Network2DDisplay(nodes,WIDTH,HEIGHT);
+        layout = new DefaultGraphLayout(nodes, WIDTH, HEIGHT);
+        Network2DDisplay display = new Network2DDisplay(layout);
         dsurf.addDisplayableProbeable(display, "Network Display");
         dsurf.addZoomable(display);
         addSimEventListener(dsurf);
