@@ -185,7 +185,7 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     }
 
     private List<DefaultDrawableNode> nodes = new ArrayList<>();
-    private final Color[] courierColors = new Color[] {Color.BLUE, Color.YELLOW, Color.GREEN, Color.PINK, Color.ORANGE, Color.CYAN, Color.gray, Color.MAGENTA};
+    private final Color[] courierColors = new Color[] {Color.BLUE, Color.YELLOW, Color.MAGENTA, Color.gray, Color.CYAN, Color.ORANGE, Color.PINK};
     private final int WIDTH = 300, HEIGHT = 300;
     private final int MARGIN = 25;
 
@@ -272,7 +272,10 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     }
 
     @Override
-    public void drawEdges(List<Product> productList) {
+    public void drawEdges(List<Product> productList, String courierName) {
+        int courierNum = Integer.parseInt(courierName.substring(7)) - 1;
+        Color courierColor = courierColors[courierNum];
+
         DefaultDrawableNode storeNode = getNode("Store");
 
         for(int i = 0; i < productList.size() - 1; i++) {
@@ -284,7 +287,7 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
             node.clearOutEdges();
             // node.clearInEdges();
             Edge edge = new Edge(node, nextNode);
-            edge.setColor(Color.GREEN);
+            edge.setColor(courierColor);
             node.addOutEdge(edge);
         }
 
@@ -294,7 +297,7 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
         lastNode.clearOutEdges();
         // lastNode.clearInEdges();
         Edge lastEdge = new Edge(lastNode, storeNode);
-        lastEdge.setColor(Color.YELLOW);
+        lastEdge.setColor(Color.WHITE);
         lastNode.addOutEdge(lastEdge);
 
 
@@ -302,7 +305,7 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
         DefaultDrawableNode firstNode = getNode("Product" + firstProduct.getId());
 
         Edge firstEdge = new Edge(storeNode, firstNode);
-        firstEdge.setColor(Color.MAGENTA);
+        firstEdge.setColor(courierColor);
         firstNode.addOutEdge(firstEdge);
     }
 }

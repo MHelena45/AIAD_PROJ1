@@ -319,7 +319,7 @@ public class StoreAgent extends Agent {
             }
 
             graphicsDisplay.setGreen("Product"+currentProduct.getId());
-            graphicsDisplay.drawEdges(productList);
+            graphicsDisplay.drawEdges(productList, sender.getLocalName());
             busy = false;
         }
 
