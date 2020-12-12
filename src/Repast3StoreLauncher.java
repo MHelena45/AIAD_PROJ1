@@ -39,7 +39,7 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     private static int numPackages;
     private static int algorithm;
     private static StoreAgent storeAgent;
-    private int cityXSize = , cityYSize;
+    private static int cityXSize = 20, cityYSize = 20;
 
     @Override
     public String[] getInitParam() {
@@ -134,7 +134,7 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     private static List<Product> createProducts(int numProducts) {
         List<Product> products = new ArrayList<>();
         for (int i = 1; i <= numProducts; i++) {
-            Product newProduct = new Product(i, new Location(generator.nextInt(21) - 10, generator.nextInt(21) - 10), generator.nextInt(3) + 1);
+            Product newProduct = new Product(i, new Location(generator.nextInt(cityXSize) - cityXSize/2, generator.nextInt(cityYSize) - cityYSize/2), generator.nextInt(3) + 1);
             products.add(newProduct);
         }
         return products;
@@ -190,18 +190,30 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
 
     private void addDeliveryNode(Product product) {
         Location productLocation = product.getDeliveryLocation();
-        int productGraphX = productLocation.getX() + WIDTH / 2;
-        int productGraphY = productLocation.getY() + HEIGHT / 2;
+        Location producGraphtLocation = convertToGraphCoords(productLocation);
+        int productGraphX = producGraphtLocation.getX();
+        int productGraphY = producGraphtLocation.getY();
 
         DefaultDrawableNode node = generateNode("Product" + product.getId(), Color.RED, productGraphX, productGraphY, 5);
         nodes.add(node);
     }
 
+    private Location convertToGraphCoords(Location location) {
+        int x = (location.getX() + cityXSize/2) * (WIDTH/cityXSize);
+        int y = (location.getY() - cityYSize/2) * -(HEIGHT/cityYSize);
+
+        return new Location(x,y);
+    }
+
     private void buildAndScheduleDisplay() {
         Location storeLocation = storeAgent.getStoreLocation();
+        Location storeGraphLocation = convertToGraphCoords(storeLocation);
 
-        int storeGraphX = storeLocation.getX() + WIDTH / 2;
-        int storeGraphY = storeLocation.getY() + HEIGHT / 2;
+        int storeGraphX = storeGraphLocation.getX();
+        int storeGraphY = storeGraphLocation.getY();
+
+        System.out.println("Store X: " + storeGraphX);
+        System.out.println("Store Y: " + storeGraphY);
 
         DefaultDrawableNode node = generateNode("Store", Color.WHITE, storeGraphX, storeGraphY, 10);
         nodes.add(node);
