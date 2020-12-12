@@ -1,5 +1,6 @@
 package Agents;
 
+import AuxiliaryClasses.ConfirmationResult;
 import AuxiliaryClasses.Location;
 import AuxiliaryClasses.Product;
 import jade.core.AID;
@@ -296,9 +297,14 @@ public class StoreAgent extends Agent {
         protected void handleAllResultNotifications(Vector resultNotifications) {
             System.out.println("[STORE] Agent " + ((ACLMessage)resultNotifications.get(0)).getSender().getLocalName() + " confirmed product delivery.");
             float totalDist = 0f;
+            Product currentProduct = null;
+            List<Product> productList;
             AID sender = ((ACLMessage)resultNotifications.get(0)).getSender();
             try {
-                totalDist = (float) ((ACLMessage)resultNotifications.get(0)).getContentObject();
+                ConfirmationResult confirmationResult = (ConfirmationResult) ((ACLMessage)resultNotifications.get(0)).getContentObject();
+                totalDist = confirmationResult.getTotalDistance();
+                currentProduct = confirmationResult.getProduct();
+                productList = confirmationResult.getProductList();
             } catch (UnreadableException e) {
                 System.err.println("[STORE] Unable to read courier total time.");
             }
@@ -310,6 +316,8 @@ public class StoreAgent extends Agent {
                 CourierTuple tuple = usedCouriers.get(sender);
                 tuple.addNewPackage(totalDist);
             }
+
+
             busy = false;
         }
 

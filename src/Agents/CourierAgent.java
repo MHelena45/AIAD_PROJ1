@@ -1,6 +1,7 @@
 package Agents;
 
 import AuxiliaryClasses.AlgorithmUsed;
+import AuxiliaryClasses.ConfirmationResult;
 import AuxiliaryClasses.Evaluators.IEvaluator;
 import AuxiliaryClasses.Evaluators.IncrementDistanceEvaluator;
 import AuxiliaryClasses.Evaluators.MinimumCouriersEvaluator;
@@ -214,9 +215,9 @@ public class CourierAgent extends Agent implements Serializable {
 
         protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose, ACLMessage accept) {
             System.out.println("[" + this.getAgent().getLocalName() + "] Confirming delivery...");
-
+            Product product = null;
             try {
-                Product product = (Product) cfp.getContentObject();
+                product = (Product) cfp.getContentObject();
                 addDelivery(product, listOfDeliveries);
             } catch (UnreadableException e) {
                 System.err.println("[" + this.getAgent().getLocalName() + "] Error confirming delivery");
@@ -225,8 +226,9 @@ public class CourierAgent extends Agent implements Serializable {
             ACLMessage result = accept.createReply();
             result.setPerformative(ACLMessage.INFORM);
             float totalTime = Location.calculateTotalTime(storeLocation, (CourierAgent) this.getAgent(), listOfDeliveries);
+            ConfirmationResult confirmationResult = new ConfirmationResult(product, totalTime * velocity, listOfDeliveries);
             try {
-                result.setContentObject(totalTime * velocity); //Confirm delivery with current total distance
+                result.setContentObject(confirmationResult); //Confirm delivery with current total distance
             } catch (IOException e) {
                 System.err.println("[" + this.getAgent().getLocalName() + "] Error setting totalTime response");
             }
