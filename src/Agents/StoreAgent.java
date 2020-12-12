@@ -210,6 +210,7 @@ public class StoreAgent extends Agent {
             Product product = products.get(0);
             System.out.println("[STORE] Proposing new product: (size: " + product.getVolume() + ", location: <" + product.getDeliveryLocation().getX() + "," + product.getDeliveryLocation().getY() + ">)");
             sendDeliveryRequest(product);
+            graphicsDisplay.addDeliveryNode(product);
             products.remove(0);
             if(products.isEmpty()) {
                 new java.util.Timer().schedule(
