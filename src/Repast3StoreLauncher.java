@@ -35,16 +35,41 @@ import java.util.concurrent.TimeUnit;
 class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     private static Random generator = new Random(123456);
     private static final Location storeLocation = new Location(0,0);
-    private static int numCouriers;
-    private static int numPackages;
-    private static int algorithm;
+    public static int numCouriers;
+    public static int numPackages;
+    public static int algorithm;
     private static StoreAgent storeAgent;
     private static int cityXSize = 20, cityYSize = 20;
     private GraphLayout layout;
 
     @Override
     public String[] getInitParam() {
-        return new String[0];
+        String[] params = {"numCouriers", "numPackages", "algorithm"};
+        return params;
+    }
+
+    public void setNumCouriers(int numCouriers) {
+        Repast3StoreLauncher.numCouriers = numCouriers;
+    }
+
+    public int getNumCouriers() {
+        return numCouriers;
+    }
+
+    public void setNumPackages(int numPackages) {
+        Repast3StoreLauncher.numPackages = numPackages;
+    }
+
+    public int getNumPackages() {
+        return numPackages;
+    }
+
+    public void setAlgorithm(int algorithm) {
+        Repast3StoreLauncher.algorithm = algorithm;
+    }
+
+    public int getAlgorithm() {
+        return algorithm;
     }
 
     @Override
@@ -250,9 +275,29 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
         timePerPackagePlot.addSequence("Package Time", () -> storeAgent.getPackageAvgTime());
         timePerPackagePlot.display();
 
+        // Courier usage graph
+        OpenSequenceGraph couriersUsedPlot = null;
+        if (couriersUsedPlot != null) couriersUsedPlot.dispose();
+        couriersUsedPlot = new OpenSequenceGraph("Couriers Used", this);
+        couriersUsedPlot.setAxisTitles("time", "Num. Couriers");
+
+        couriersUsedPlot.addSequence("Couriers Used", () -> storeAgent.getUsedCouriers());
+        couriersUsedPlot.display();
+
+        // Rejected packages graph
+        OpenSequenceGraph rejectedPackagesGraph = null;
+        if (rejectedPackagesGraph != null) rejectedPackagesGraph.dispose();
+        rejectedPackagesGraph = new OpenSequenceGraph("Rejected Packages", this);
+        rejectedPackagesGraph.setAxisTitles("time", "Rejected Packages");
+
+        rejectedPackagesGraph.addSequence("Rejected Packages", () -> storeAgent.getRejectedPackages());
+        rejectedPackagesGraph.display();
+
         getSchedule().scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
         getSchedule().scheduleActionAtInterval(100, totalDistPlot, "step", Schedule.LAST);
         getSchedule().scheduleActionAtInterval(100, timePerPackagePlot, "step", Schedule.LAST);
+        getSchedule().scheduleActionAtInterval(100, couriersUsedPlot, "step", Schedule.LAST);
+        getSchedule().scheduleActionAtInterval(100, rejectedPackagesGraph, "step", Schedule.LAST);
     }
 
     private DefaultDrawableNode getNode(String label) {

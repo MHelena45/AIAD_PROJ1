@@ -151,6 +151,15 @@ public class StoreAgent extends Agent {
         return avgTime;
     }
 
+    public float getUsedCouriers() {
+        float numCouriers = usedCouriers.size();
+        return numCouriers;
+    }
+
+    public float getRejectedPackages() {
+        return this.rejectedPackagesNumber / (float)this.totalPackageNumber;
+    }
+
     private void sendDeliveryRequest(Product product) { //Call this when we want to send a delivery request to our Couriers
         ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
         try {
