@@ -33,7 +33,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
-    private static Random generator = new Random(123456);
+    private static Random generator = new Random(420);
     private static final Location storeLocation = new Location(0,0);
     public static int numCouriers;
     public static int numPackages;
@@ -309,7 +309,7 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
             DefaultDrawableNode nextNode = getNode("Product" + nextProduct.getId());
 
             node.clearOutEdges();
-            // node.clearInEdges();
+            //node.clearInEdges();
             Edge edge = new Edge(node, nextNode);
             edge.setColor(courierColor);
             node.addOutEdge(edge);

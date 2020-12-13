@@ -224,11 +224,11 @@ public class StoreAgent extends Agent {
             graphicsDisplay.addDeliveryNode(product);
             products.remove(0);
             if(products.isEmpty()) {
-                graphicsDisplay.pause();
                 new java.util.Timer().schedule(
                         new java.util.TimerTask() {
                             @Override
                             public void run() {
+                                graphicsDisplay.pause();
                                 printOutput();
                             }
                         },
