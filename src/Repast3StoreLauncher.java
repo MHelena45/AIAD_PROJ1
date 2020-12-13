@@ -48,30 +48,6 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
         return params;
     }
 
-    public void setNumCouriers(int numCouriers) {
-        Repast3StoreLauncher.numCouriers = numCouriers;
-    }
-
-    public int getNumCouriers() {
-        return numCouriers;
-    }
-
-    public void setNumPackages(int numPackages) {
-        Repast3StoreLauncher.numPackages = numPackages;
-    }
-
-    public int getNumPackages() {
-        return numPackages;
-    }
-
-    public void setAlgorithm(int algorithm) {
-        Repast3StoreLauncher.algorithm = algorithm;
-    }
-
-    public int getAlgorithm() {
-        return algorithm;
-    }
-
     @Override
     public String getName() {
         return "Store -- SAJaS Repast3";
@@ -256,7 +232,6 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
         addSimEventListener(dsurf);
         dsurf.display();
 
-
         // total Distance Graph
         OpenSequenceGraph totalDistPlot = null;
         if (totalDistPlot != null) totalDistPlot.dispose();
@@ -314,6 +289,10 @@ class Repast3StoreLauncher  extends Repast3Launcher implements GraphicsDisplay {
     public void setGreen(String nodeName) {
         DefaultDrawableNode node = getNode(nodeName);
         if(node != null) node.setColor(Color.GREEN);
+    }
+
+    public void pause() {
+        this.stop();
     }
 
     @Override

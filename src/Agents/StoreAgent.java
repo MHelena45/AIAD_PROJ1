@@ -5,6 +5,7 @@ import AuxiliaryClasses.Location;
 import AuxiliaryClasses.Product;
 import jade.core.AID;
 import sajas.core.Agent;
+import sajas.core.Runtime;
 import sajas.core.behaviours.CyclicBehaviour;
 import sajas.core.behaviours.TickerBehaviour;
 import sajas.domain.DFService;
@@ -223,6 +224,7 @@ public class StoreAgent extends Agent {
             graphicsDisplay.addDeliveryNode(product);
             products.remove(0);
             if(products.isEmpty()) {
+                graphicsDisplay.pause();
                 new java.util.Timer().schedule(
                         new java.util.TimerTask() {
                             @Override
